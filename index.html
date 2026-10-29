@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Puente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <span class="brand">Puente</span>
+    <span class="spacer"></span>
+    <span class="steps" id="steps"></span>
+    <button class="stopbtn" id="stop" type="button">Stop</button>
+  </div>
+  <div class="track"><i id="bar" style="width:0%"></i></div>
+  <main id="view"></main>
+  <p class="note">Prototype for a university project. Fictional data only. Not a clinical tool and not in use with patients. The microphone is simulated: a published web page cannot record audio.</p>
+</div>
+<div id="sheet"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="./config.js"></script>
+<script src="./src/lib/supabase.js"></script>
+<script src="./src/main.js"></script>
+</body>
+</html>

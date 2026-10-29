@@ -1,0 +1,12 @@
+{
+  "name": "puente",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puente: a picture-first questionnaire for people with aphasia",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && npx --yes serve dist -l 3000",
+    "preview": "npx --yes serve dist -l 3000"
+  },
+  "engines": { "node": ">=18" }
+}
