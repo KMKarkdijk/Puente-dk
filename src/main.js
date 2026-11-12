@@ -388,7 +388,7 @@
 
   /* interests: all fourteen are shown from the start, so showAll begins open */
   function freshState(){ return { i:0, a:{}, showAll:{interests:true}, rec:null, heard:null,
-    pageSay:'', mapView:null }; }
+    voiceError:'', pageSay:'', mapView:null }; }
   var state = freshState();
   var view = document.getElementById('view');
   var sheet = document.getElementById('sheet');
@@ -413,7 +413,7 @@
   }
 
   /* ---------- speech ---------- */
-  var VOICES = [], SS = null;
+  var VOICES = [], SS = null, recognition = null, recognitionFinal = '';
   try{ if('speechSynthesis' in window){ SS = window.speechSynthesis; } }catch(e){ SS = null; }
   function loadVoices(){ try{ VOICES = (SS && SS.getVoices()) || []; }catch(e){ VOICES = []; } }
   if(SS){ loadVoices(); try{ SS.addEventListener('voiceschanged', loadVoices); }catch(e){ SS.onvoiceschanged = loadVoices; } }
@@ -448,6 +448,69 @@
       }, 1400);
     }catch(e){ sayState('fail', text); }
   }
+  function hasSpeechRecognition(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+  function cancelRecognition(){
+    var active = recognition; recognition = null; state.rec = null;
+    if(active){ try{ active.abort(); }catch(e){} }
+  }
+  function recognitionError(code){
+    if(code==='not-allowed' || code==='service-not-allowed') return 'Microphone access was not allowed. You can still choose an answer below.';
+    if(code==='audio-capture') return 'No microphone was found. Check your microphone or choose an answer below.';
+    if(code==='network') return 'The browser speech service could not be reached. Check your connection or choose an answer below.';
+    if(code==='no-speech') return 'No speech was recognised. Try again when you are ready, or choose an answer below.';
+    if(code==='aborted') return 'Listening stopped. You can try again or choose an answer below.';
+    return 'Speech recognition could not start. You can try again or choose an answer below.';
+  }
+  function startRecognition(){
+    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition){
+      state.voiceError = 'Speech input is not supported by this browser. Please use the answer choices or the name keyboard.';
+      render(); return;
+    }
+    try{
+      var instance = new SpeechRecognition();
+      recognition = instance; recognitionFinal = '';
+      state.heard = ''; state.voiceError = '';
+      instance.lang = 'en-GB'; instance.continuous = true;
+      instance.interimResults = true; instance.maxAlternatives = 1;
+      instance.onresult = function(event){
+        if(recognition !== instance) return;
+        var finalText = '', interimText = '';
+        for(var i=0;i<event.results.length;i++){
+          var result = event.results[i], transcript = result[0] ? result[0].transcript : '';
+          if(result.isFinal) finalText += transcript; else interimText += transcript;
+        }
+        recognitionFinal = finalText;
+        state.heard = (finalText + (interimText ? ' ' + interimText : '')).trim();
+        render();
+      };
+      instance.onerror = function(event){
+        if(recognition !== instance) return;
+        recognition = null; state.rec = null;
+        state.voiceError = recognitionError(event.error); render();
+      };
+      instance.onend = function(){
+        if(recognition !== instance) return;
+        recognition = null; state.rec = null;
+        if(!state.heard || !state.heard.trim())
+          state.voiceError = 'No words were recognised. Try again when you are ready, or choose an answer below.';
+        render();
+      };
+      state.rec = 'on'; render(); instance.start();
+    }catch(e){
+      recognition = null; state.rec = null;
+      state.voiceError = 'The microphone could not be started. Check browser permissions and try again.';
+      render();
+    }
+  }
+  function stopRecognition(){
+    if(!recognition){ state.rec = null; render(); return; }
+    state.rec = 'stopping';
+    try{ recognition.stop(); }
+    catch(e){ cancelRecognition(); state.voiceError = 'Listening stopped. You can try again or choose an answer below.'; }
+    render();
+  }
+
   function spoken(s){
     var t = s.q + '. ';
     if(s.sub) t += s.sub + ' ';
@@ -482,21 +545,39 @@
       return '<div class="voicebar"><button class="vbtn alt" type="button" data-say="q">' +
         ico('speaker',24)+' Listen to the question</button></div><div id="sayout"></div>';
     }
-    if(state.rec==='on'){
-      return '<div class="voicebar"><button class="vbtn" type="button" data-rec="stop" aria-pressed="true">' +
-        '<span class="levels"><i></i><i></i><i></i><i></i><i></i></span> Listening… tap to stop</button></div>';
+    var privacy = '<p class="voice-privacy">Your browser handles speech recognition. Depending on your browser, audio may be sent to its speech service. Puente does not record or store audio.</p>';
+    var play = '<button class="vbtn alt" type="button" data-say="q">'+ico('play',22)+' Play the question</button>';
+    if(!hasSpeechRecognition()){
+      return '<div class="voicebar">'+play+'</div><p class="voice-help" role="status">Speech input is not supported by this browser. Please use the answer choices or the name keyboard.</p>' +
+        privacy + '<div id="sayout"></div>';
     }
-    if(state.heard){
-      return '<div class="heard"><p class="kicker">This is what I heard <span class="sim">simulated</span></p>' +
-        '<p class="what">“'+esc(state.heard)+'”</p><div class="voicebar" style="margin:0">' +
-        '<button class="vbtn" type="button" data-heard="yes">'+ico('check',22)+' Yes, that is right</button>' +
-        '<button class="vbtn alt" type="button" data-heard="no">'+ico('cross',22)+' No, try again</button>' +
-        '</div></div>';
+    if(state.rec){
+      return '<div class="voicebar"><button class="vbtn" type="button" data-rec="stop" aria-pressed="true"'+
+        (state.rec==='stopping'?' disabled':'')+'>' +
+        (state.rec==='stopping'?'Finishing… tap to wait':'<span class="levels"><i></i><i></i><i></i><i></i><i></i></span> Listening… tap to stop')+
+        '</button></div><div class="heard" aria-live="polite"><p class="kicker">Words recognised so far</p>' +
+        '<p class="what">'+esc(state.heard || 'Speak when you are ready.')+'</p></div>' + privacy;
     }
-    return '<div class="voicebar">' +
-      '<button class="vbtn alt" type="button" data-say="q">'+ico('play',22)+' Play the question</button>' +
-      '<button class="vbtn" type="button" data-rec="start" aria-pressed="false">'+ico('mic',22)+' Answer with your voice</button>' +
-      '</div><div id="sayout"></div>';
+    if(state.heard && state.heard.trim()){
+      var transcript = '<div class="heard"><label class="kicker" for="voiceTranscript">Review and edit what I heard</label>' +
+        '<textarea id="voiceTranscript" class="transcript" rows="3">'+esc(state.heard)+'</textarea>';
+      if(s.kind==='name'){
+        transcript += '<div class="voicebar"><button class="vbtn" type="button" data-heard="yes">'+
+          ico('check',22)+' Use this name</button><button class="vbtn alt" type="button" data-rec="start">'+
+          ico('mic',22)+' Record again</button></div>';
+      } else {
+        transcript += '<p class="voice-help">Use these words to help you answer. Choose the option that is right for you below. Puente will not choose an answer for you.</p>' +
+          '<div class="voicebar"><button class="vbtn alt" type="button" data-rec="start">'+ico('mic',22)+' Record again</button></div>';
+      }
+      transcript += '</div>';
+      return '<div class="voicebar">'+play+'</div>' + transcript +
+        (state.voiceError ? '<p class="voice-help" role="status">'+esc(state.voiceError)+'</p>' : '') +
+        privacy + '<div id="sayout"></div>';
+    }
+    return '<div class="voicebar">'+play+
+      '<button class="vbtn" type="button" data-rec="start" aria-pressed="false">'+ico('mic',22)+' Answer with your voice</button></div>' +
+      (state.voiceError ? '<p class="voice-help" role="status">'+esc(state.voiceError)+'</p>' : '') +
+      privacy + '<div id="sayout"></div>';
   }
 
   var IL = { name:['abc','arr','patient'], street:['house','arr','pin'], travel:['house','arr','bus','arr','pin'],
@@ -1113,6 +1194,7 @@
 
   /* ---------- stop sheet ---------- */
   function openSheet(){
+    cancelRecognition();
     sheet.innerHTML = '<div class="sheet"><div class="inner" role="dialog" aria-modal="true" aria-label="Stop">' +
       '<h2>Do you want to stop?</h2>' +
       '<button class="opt" type="button" data-sheet="break">'+ico('pause')+'<span>Take a break. Come back later.</span></button>' +
@@ -1147,12 +1229,13 @@
   }
 
   /* ---------- events ---------- */
-  function go(n){ var L=active(); state.rec=null; state.heard=null;
+  function go(n){ var L=active(); cancelRecognition(); state.heard=null; state.voiceError='';
     state.i = Math.max(0, Math.min(L.length-1, state.i+n)); window.scrollTo(0,0); render(); }
 
   function bind(){
     view.querySelectorAll('[data-pick]').forEach(function(b){
       b.addEventListener('click', function(){
+        cancelRecognition();
         var s = step(), v = b.getAttribute('data-pick');
         if(s.kind==='single'||s.kind==='radar'||s.kind==='street'){ set(s.id,v); }
         else { var cur=get(s.id)||[], i=cur.indexOf(v); if(i>=0) cur.splice(i,1); else cur.push(v); set(s.id,cur); }
@@ -1172,6 +1255,8 @@
     });
     var f = view.querySelector('#nameField');
     if(f) f.addEventListener('input', function(){ set('name', f.value.trim()); });
+    var transcriptField = view.querySelector('#voiceTranscript');
+    if(transcriptField) transcriptField.addEventListener('input', function(){ state.heard = transcriptField.value; });
     view.querySelectorAll('[data-more]').forEach(function(b){
       b.addEventListener('click', function(){ state.showAll[b.getAttribute('data-more')]=true; render(); });
     });
@@ -1182,25 +1267,16 @@
     });
     view.querySelectorAll('[data-rec]').forEach(function(b){
       b.addEventListener('click', function(){
-        var k = b.getAttribute('data-rec'), s = step();
-        if(k==='start'){
-          state.rec='on'; render();
-          setTimeout(function(){ if(state.rec!=='on') return;
-            state.rec=null; state.heard = s.voiceDemo || 'Yes'; render(); }, 2200);
-        } else { state.rec=null; render(); }
+        var k = b.getAttribute('data-rec');
+        if(k==='start') startRecognition();
+        else if(k==='stop') stopRecognition();
       });
     });
     view.querySelectorAll('[data-heard]').forEach(function(b){
       b.addEventListener('click', function(){
-        var s = step(), yes = b.getAttribute('data-heard')==='yes', h = state.heard;
-        state.heard = null;
-        if(yes && h){
-          if(s.kind==='name') set('name', h);
-          else if(s.kind==='street') set('street', DEMO_HOME);
-          else if(s.kind==='single' || s.kind==='radar') set(s.id, h);
-          else { var cur=get(s.id)||[]; if(cur.indexOf(h)<0) cur.push(h); set(s.id,cur); }
-        }
-        render();
+        var s = step(), yes = b.getAttribute('data-heard')==='yes', h = (state.heard || '').trim();
+        if(yes && h && s.kind==='name') set('name', h.slice(0,20));
+        state.heard = null; state.voiceError = ''; render();
       });
     });
     view.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click', function(){ go(1); }); });
@@ -1209,11 +1285,12 @@
       b.addEventListener('click', function(){
         var id=b.getAttribute('data-edit'), L=active();
         for(var k=0;k<L.length;k++){ if(L[k].id===id){ state.i=k; break; } }
-        state.heard=null; window.scrollTo(0,0); render();
+        cancelRecognition(); state.heard=null; state.voiceError=''; window.scrollTo(0,0); render();
       });
     });
     view.querySelectorAll('[data-restart]').forEach(function(b){
       b.addEventListener('click', function(){
+        cancelRecognition();
         try{ SS && SS.cancel(); }catch(e){}
         state=freshState(); window.scrollTo(0,0); render();
       });

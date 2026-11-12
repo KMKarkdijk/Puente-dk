@@ -34,7 +34,7 @@ Do not open `index.html` by double-clicking after a fresh checkout: `config.js` 
 | Sending the request to a person | shown on screen only | database or email service (`requests` table, or a server function that sends mail) |
 | Accounts / login | none | Supabase Auth, if people need to return |
 | File storage | none needed | none |
-| Voice mode | simulated demo; uses the browser's `speechSynthesis` | real speech recognition would need a browser API or a speech-to-text service; its API key must live in a server function, never in the page |
+| Voice mode | browser `SpeechRecognition` / `webkitSpeechRecognition` (English, en-GB); no audio recording or storage by Puente | browser support varies; depending on the browser, audio may be processed by its speech provider; no Puente backend is used |
 | External APIs | OpenStreetMap tiles, Google Fonts | OSM's public tile server is for light use; for real traffic use a tile provider (MapTiler, Stadia, Mapbox) |
 
 Nothing here needs a backend to run today. The site works as it is.
@@ -44,8 +44,10 @@ Nothing here needs a backend to run today. The site works as it is.
 - The build fails if that variable holds a `service_role` or `sb_secret_` key.
 - Never put API keys for other services in `src/`. Use a Vercel serverless function (`/api/...`) and a Vercel environment variable instead.
 
-## Privacy (important before storing answers)
-Answers include a name, a home location and the fact that someone had a stroke. In the EU that is health data (GDPR, special category). Before saving requests, get explicit consent, use an EU Supabase region and write a privacy notice. Google Fonts loaded from Google's servers is also a GDPR point; you can self-host the two font families instead.
+## Privacy (important before using with real participants)
+Answers include a name, a home location and the fact that someone had a stroke. In the EU that is health data (GDPR, special category). Before using this prototype with real participants, complete a privacy and accessibility review and provide an appropriate privacy notice and lawful basis.
+
+Voice input uses the browser's built-in speech-recognition API. Puente itself does not record or store audio, but the browser may send audio to an external speech provider; this depends on the browser and its settings. Check the provider's terms, processing location and retention before use with real participants. The app does not save the transcript to a database. Google Fonts loaded from Google's servers is also a GDPR point; you can self-host the two font families instead.
 
 ## Deploy to Vercel
 1. Create a GitHub repo and push this folder (`.gitignore` already excludes `dist`, `.env`).

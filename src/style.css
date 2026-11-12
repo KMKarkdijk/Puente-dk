@@ -259,3 +259,14 @@ h1 .sub{display:block;font-size:21px;font-weight:400;margin-top:8px}
 .map #leaflet{position:absolute;inset:0;z-index:1;border-radius:inherit}
 .house-pin{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   background:var(--accent);color:var(--accent-ink);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+
+
+/* browser speech-to-text */
+.voice-privacy,.voice-help{font-size:14px;line-height:1.5;color:var(--muted);margin:-8px 0 18px}
+.voice-privacy{padding:10px 12px;background:var(--surface);border-left:3px solid var(--accent-line)}
+.voice-help{margin:0 0 16px}
+.heard .transcript{display:block;width:100%;min-height:104px;padding:12px 14px;resize:vertical;
+  border:2px solid var(--accent-line);border-radius:10px;background:var(--surface);color:var(--ink);
+  font:inherit;font-size:19px;line-height:1.45}
+.heard .voicebar{margin:14px 0 0}
+.vbtn:disabled{opacity:.55;cursor:wait}
