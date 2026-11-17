@@ -869,7 +869,7 @@
   /* Real map: Leaflet + OpenStreetMap tiles. Same controls as before (arrows, + and -). */
   var MADRID = [40.4168, -3.7038], liveMap = null;
   function mapHtml(id, multi){
-    var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad, pictureMode=state.a.mode==='Pictures';
+    var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad, pictureMode=state.a.mode==='picture';
     var on=function(n){return many.indexOf(n)>=0;};
     var h='';
     if(pictureMode) h+='<div class="district-instruction">'+ico('house',30)+'<span>'+(multi?'Choose the districts you could visit.':'Where do you live? Tap your district on the map.')+'</span></div>';
@@ -908,16 +908,16 @@
         var name=g.getAttribute('data-dist'), selected=many.indexOf(name)>=0;
         g.classList.toggle('on',selected); g.setAttribute('aria-pressed',selected);
         var c=cellByName(name), mark=g.querySelector('.dcheck-bg');
-        if(state.a.mode==='Pictures' && selected && !mark){
+        if(state.a.mode==='picture' && selected && !mark){
           var ns='http://www.w3.org/2000/svg', bg=document.createElementNS(ns,'circle'), tick=document.createElementNS(ns,'path');
           bg.setAttribute('class','dcheck-bg'); bg.setAttribute('cx',c.s[0]); bg.setAttribute('cy',c.s[1]); bg.setAttribute('r','7');
           tick.setAttribute('class','dcheck'); tick.setAttribute('d','M'+(c.s[0]-3.5)+' '+c.s[1]+'l2.4 2.5 4.8-5');
           g.appendChild(bg); g.appendChild(tick);
-        } else if(state.a.mode==='Pictures' && !selected && mark){
+        } else if(state.a.mode==='picture' && !selected && mark){
           mark.remove(); var tickOld=g.querySelector('.dcheck'); if(tickOld) tickOld.remove();
         }
       });
-      if(label) label.innerHTML=state.a.mode==='Pictures'
+      if(label) label.innerHTML=state.a.mode==='picture'
         ? ico('house',34)+'<span>'+(many.length?(multi?'You can go to: ':'You live in: ')+many.map(esc).join(', '):'Tap a district on the map')+'</span>'
         : (multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||''));
       var btn=view.querySelector('[data-next]'); if(btn) btn.disabled=!(multi?many.length:val);
@@ -1064,7 +1064,7 @@
       say.push(LABELS[id] + ': ' + answerText(id) + '.');
     });
     state.pageSay = say.join(' ');
-    var pictorialReview = state.a.mode === 'Pictures';
+    var pictorialReview = state.a.mode === 'picture';
     var html = '<h1>This is what I understood.<span class="sub">Is it right?</span></h1>' +
       listenBtn('page') + '<ul class="review'+(pictorialReview?' picture-review':'')+'">';
     Object.keys(LABELS).forEach(function(id){
