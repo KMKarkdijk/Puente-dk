@@ -682,7 +682,8 @@
       html += '<div class="opts'+(tiles?' tiles':'')+(tiles&&s.big?' big':'')+'">';
       opts.forEach(function(o){
         var on = s.kind==='multi' ? (val||[]).indexOf(o[0])>=0 : val===o[0];
-        html += '<button class="opt" type="button" data-pick="'+esc(o[0])+'" aria-pressed="'+on+'">' +
+        var travelLocked = s.id==='travel' && (val||[]).indexOf('I cannot go out alone')>=0 && o[0]!=='I cannot go out alone';
+        html += '<button class="opt" type="button" data-pick="'+esc(o[0])+'" aria-pressed="'+on+'"'+(travelLocked?' disabled aria-disabled="true"':'')+'>' +
           (isPics() ? ico(o[1], tiles?(s.big?68:46):26) : '') + '<span>'+esc(o[0])+'</span>' +
           ico('check',22).replace('class="ico"','class="ico tick"') + '</button>';
       });
@@ -1280,7 +1281,21 @@
         cancelRecognition();
         var s = step(), v = b.getAttribute('data-pick');
         if(s.kind==='single'||s.kind==='radar'||s.kind==='street'||(s.kind==='districts' && s.id==='home')){ set(s.id,v); }
-        else { var cur=(get(s.id)||[]).slice(), i=cur.indexOf(v); if(i>=0) cur.splice(i,1); else cur.push(v); set(s.id,cur); }
+        else {
+          var cur=(get(s.id)||[]).slice(), i=cur.indexOf(v);
+          if(s.id==='travel'){
+            if(v==='I cannot go out alone'){
+              if(i>=0) cur.splice(i,1);
+              else cur=['I cannot go out alone'];
+            } else {
+              if(cur.indexOf('I cannot go out alone')>=0) return;
+              if(i>=0) cur.splice(i,1); else cur.push(v);
+            }
+          } else {
+            if(i>=0) cur.splice(i,1); else cur.push(v);
+          }
+          set(s.id,cur);
+        }
         render();
       });
     });
