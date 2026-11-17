@@ -869,13 +869,16 @@
   /* Real map: Leaflet + OpenStreetMap tiles. Same controls as before (arrows, + and -). */
   var MADRID = [40.4168, -3.7038], liveMap = null;
   function mapHtml(id, multi){
-    var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad;
+    var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad, pictureMode=state.a.mode==='Pictures';
     var on=function(n){return many.indexOf(n)>=0;};
-    var h='<div class="dmap" id="dmap"><svg viewBox="'+(-P)+' -12 '+(DIST.w+2*P)+' '+(DIST.h+24)+'" role="group" aria-label="The 21 districts of Madrid">';
+    var h='';
+    if(pictureMode) h+='<div class="district-instruction">'+ico('house',30)+'<span>'+(multi?'Choose the districts you could visit.':'Where do you live? Tap your district on the map.')+'</span></div>';
+    h+='<div class="dmap" id="dmap"><svg viewBox="'+(-P)+' -12 '+(DIST.w+2*P)+' '+(DIST.h+24)+'" role="group" aria-label="The 21 districts of Madrid">';
     h+='<path class="dhalo" d="M'+DIST.outline.map(function(q){return q.join(' ');}).join('L')+'Z"/>';
     DIST.cells.forEach(function(c){
       h+='<g class="dcell'+(on(c.n)?' on':'')+'" data-dist="'+esc(c.n)+'" role="button" tabindex="0" aria-pressed="'+on(c.n)+'" aria-label="'+esc(c.n)+'">';
       h+='<path class="dshape" d="M'+c.d.map(function(q){return q.join(' ');}).join('L')+'Z"/>';
+      if(pictureMode && on(c.n)) h+='<circle class="dcheck-bg" cx="'+c.s[0]+'" cy="'+c.s[1]+'" r="7"/><path class="dcheck" d="M'+(c.s[0]-3.5)+' '+c.s[1]+'l2.4 2.5 4.8-5"/>';
       if(c.o){
         h+='<path class="dlead" d="M'+c.p[0]+' '+c.p[1]+'L'+(c.o[0]+(c.a==='end'?4:-4))+' '+c.o[1]+'"/>';
         h+='<circle class="ddot" cx="'+c.p[0]+'" cy="'+c.p[1]+'" r="2.2"/>';
@@ -887,7 +890,12 @@
       });
       h+='</g>';
     });
-    h+='</svg></div><p class="maplabel" id="maplabel">'+esc(multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||''))+'</p>';
+    h+='</svg></div>';
+    if(pictureMode){
+      h+='<div class="district-confirm" id="maplabel">'+ico('house',34)+'<span>'+(many.length?(multi?'You can go to: ':'You live in: ')+esc(many.join(', ')):'Tap a district on the map')+'</span></div>';
+    } else {
+      h+='<p class="maplabel" id="maplabel">'+esc(multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||''))+'</p>';
+    }
     h+='<p class="mapsub">A simple map: the districts are in the right places, but the borders are simplified.</p>';
     return h;
   }
@@ -897,10 +905,21 @@
     function paint(){
       var val=get(id), many=multi?(val||[]):(val?[val]:[]);
       box.querySelectorAll('.dcell').forEach(function(g){
-        var on=many.indexOf(g.getAttribute('data-dist'))>=0;
-        g.classList.toggle('on',on); g.setAttribute('aria-pressed',on);
+        var name=g.getAttribute('data-dist'), selected=many.indexOf(name)>=0;
+        g.classList.toggle('on',selected); g.setAttribute('aria-pressed',selected);
+        var c=cellByName(name), mark=g.querySelector('.dcheck-bg');
+        if(state.a.mode==='Pictures' && selected && !mark){
+          var ns='http://www.w3.org/2000/svg', bg=document.createElementNS(ns,'circle'), tick=document.createElementNS(ns,'path');
+          bg.setAttribute('class','dcheck-bg'); bg.setAttribute('cx',c.s[0]); bg.setAttribute('cy',c.s[1]); bg.setAttribute('r','7');
+          tick.setAttribute('class','dcheck'); tick.setAttribute('d','M'+(c.s[0]-3.5)+' '+c.s[1]+'l2.4 2.5 4.8-5');
+          g.appendChild(bg); g.appendChild(tick);
+        } else if(state.a.mode==='Pictures' && !selected && mark){
+          mark.remove(); var tickOld=g.querySelector('.dcheck'); if(tickOld) tickOld.remove();
+        }
       });
-      if(label) label.textContent=multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||'');
+      if(label) label.innerHTML=state.a.mode==='Pictures'
+        ? ico('house',34)+'<span>'+(many.length?(multi?'You can go to: ':'You live in: ')+many.map(esc).join(', '):'Tap a district on the map')+'</span>'
+        : (multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||''));
       var btn=view.querySelector('[data-next]'); if(btn) btn.disabled=!(multi?many.length:val);
     }
     function choose(n){
