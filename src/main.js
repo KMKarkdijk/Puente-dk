@@ -266,7 +266,7 @@
     });
     return best;
   }
-  function homePoint(){ var v = get('street'); return (v && v.lat !== undefined) ? v : null; }
+  function homePoint(){ var v = cellCentre(get('home')); return v ? {lat:v.lat, lon:v.lon, area:get('home')} : null; }
   /* where the simulated voice answer puts the house */
   var DEMO_HOME = { lat:40.4295, lon:-3.7015, area:'Chamberí' };
   function streetByName(n){ for(var i=0;i<STREETS.length;i++){ if(STREETS[i].s===n) return STREETS[i]; } return null; }
@@ -287,6 +287,13 @@
   /* Spanish alphabet: Ñ sits after N */
   var LETTERS = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
 
+  var DIST = {"w":320.0,"h":420.0,"lon0":-3.862,"lon1":-3.498,"lat0":40.298,"lat1":40.662,"pad":80,"f":9.5,"outline":[[92.3,16.2],[142.4,50.8],[177.6,80.8],[190.8,133.8],[221.5,156.9],[264.6,168.5],[295.4,191.5],[304.2,226.2],[291.0,255.0],[304.2,272.3],[295.4,306.9],[277.8,335.8],[247.0,364.6],[216.3,381.9],[176.7,395.8],[137.1,387.7],[115.2,364.6],[84.4,353.1],[58.0,330.0],[43.1,303.5],[31.6,278.1],[20.2,249.2],[43.1,229.6],[53.6,211.2],[34.3,185.8],[14.1,139.6],[27.3,93.5],[53.6,53.1]],"cells":[{"n":"Fuencarral-El Pardo","d":[[92.3,16.2],[142.4,50.8],[177.6,80.8],[185.3,111.7],[151.4,174.5],[145.0,180.1],[104.6,204.2],[48.4,204.2],[34.3,185.8],[14.1,139.6],[27.3,93.5],[53.6,53.1]],"s":[96.7,158.1],"t":["Fuencarral","El Pardo"],"f":9.5,"p":[101.8,112.8]},{"n":"Barajas","d":[[227.4,158.5],[264.6,168.5],[295.4,191.5],[304.2,226.2],[291.0,255.0],[301.4,268.6],[276.5,263.4],[223.1,230.3]],"s":[253.2,214.6],"t":["Barajas"],"f":9.5,"p":[262.8,212.4]},{"n":"Moncloa-Aravaca","d":[[114.7,269.2],[106.0,279.2],[32.2,279.2],[31.6,278.1],[20.2,249.2],[43.1,229.6],[53.6,211.2],[48.4,204.2],[104.6,204.2],[120.9,246.3]],"s":[96.7,250.4],"t":["Moncloa"],"f":9.5,"p":[79.0,241.9]},{"n":"Hortaleza","d":[[185.3,111.7],[190.8,133.8],[221.5,156.9],[227.4,158.5],[223.1,230.3],[214.3,234.8],[182.7,229.2],[151.4,174.5]],"s":[195.2,211.2],"t":["Hortaleza"],"f":9.5,"p":[192.3,177.5]},{"n":"Vicálvaro","d":[[301.4,268.6],[304.2,272.3],[295.4,306.9],[277.8,335.8],[270.4,342.7],[211.2,316.3],[214.1,287.2],[276.5,263.4]],"s":[235.6,298.8],"t":["Vicálvaro"],"f":9.5,"p":[260.3,303.5]},{"n":"Villa de Vallecas","d":[[270.4,342.7],[247.0,364.6],[216.3,381.9],[193.4,389.9],[180.8,349.2],[201.4,320.8],[211.2,316.3]],"s":[214.5,346.2],"t":["Villa de","Vallecas"],"f":9.5,"p":[215.8,349.5]},{"n":"Latina","d":[[72.1,342.3],[58.0,330.0],[43.1,303.5],[32.2,279.2],[106.0,279.2],[121.2,304.3],[121.2,304.9]],"s":[96.7,308.1],"t":["Latina"],"f":9.5,"p":[75.3,306.0]},{"n":"Villaverde","d":[[193.4,389.9],[176.7,395.8],[137.1,387.7],[115.2,364.6],[114.5,364.4],[126.3,352.0],[159.5,339.8],[180.8,349.2]],"s":[151.2,365.8],"t":["Villaverde"],"f":7.98,"p":[160.0,367.1]},{"n":"San Blas-Canillejas","d":[[276.5,263.4],[214.1,287.2],[199.5,271.7],[214.3,234.8],[223.1,230.3]],"s":[222.4,264.2],"t":["San Blas"],"f":8.74,"p":[228.0,258.8]},{"n":"Tetuán","d":[[145.0,180.1],[153.2,248.3],[120.9,246.3],[104.6,204.2]],"s":[141.5,233.1],"t":["Tetuán"],"f":9.5,"p":[129.1,212.8]},{"n":"Carabanchel","d":[[114.5,364.4],[84.4,353.1],[72.1,342.3],[121.2,304.9],[122.0,306.1],[126.3,352.0]],"s":[111.6,327.7],"t":["Carabanchel"],"f":9.5,"o":[-8.0,340.7],"a":"end","p":[105.9,340.7]},{"n":"Chamartín","d":[[182.7,229.2],[168.4,249.1],[154.8,249.4],[153.2,248.3],[145.0,180.1],[151.4,174.5]],"s":[160.9,230.8],"t":["Chamartín"],"f":9.5,"o":[328.0,227.8],"a":"start","p":[165.3,227.8]},{"n":"Puente de Vallecas","d":[[180.8,349.2],[159.5,339.8],[154.9,321.4],[160.6,307.8],[176.8,301.1],[201.4,320.8]],"s":[173.2,316.2],"t":["Puente de","Vallecas"],"f":9.5,"o":[328.0,324.2],"a":"start","p":[175.2,324.2]},{"n":"Moratalaz","d":[[211.2,316.3],[201.4,320.8],[176.8,301.1],[177.7,279.3],[183.9,272.6],[199.5,271.7],[214.1,287.2]],"s":[190.8,294.2],"t":["Moratalaz"],"f":9.5,"o":[328.0,300.2],"a":"start","p":[195.0,292.9]},{"n":"Ciudad Lineal","d":[[199.5,271.7],[183.9,272.6],[168.4,249.1],[182.7,229.2],[214.3,234.8]],"s":[188.1,250.4],"t":["Ciudad","Lineal"],"f":9.5,"p":[189.7,249.4]},{"n":"Usera","d":[[126.3,352.0],[122.0,306.1],[154.9,321.4],[159.5,339.8]],"s":[136.3,325.4],"t":["Usera"],"f":9.5,"p":[139.6,330.9]},{"n":"Centro","d":[[152.1,281.1],[149.2,290.4],[121.2,304.3],[106.0,279.2],[114.7,269.2],[148.1,274.9]],"s":[135.9,284.4],"t":["Centro"],"f":9.5,"o":[-8.0,285.7],"a":"end","p":[126.6,285.7]},{"n":"Chamberí","d":[[154.8,249.4],[148.1,274.9],[114.7,269.2],[120.9,246.3],[153.2,248.3]],"s":[139.8,261.9],"t":["Chamberí"],"f":9.5,"o":[-8.0,260.3],"a":"end","p":[138.6,260.3]},{"n":"Salamanca","d":[[177.7,279.3],[152.1,281.1],[148.1,274.9],[154.8,249.4],[168.4,249.1],[183.9,272.6]],"s":[161.8,267.7],"t":["Salamanca"],"f":9.5,"o":[328.0,266.9],"a":"start","p":[164.1,266.9]},{"n":"Arganzuela","d":[[122.0,306.1],[121.2,304.9],[121.2,304.3],[149.2,290.4],[160.6,307.8],[154.9,321.4]],"s":[145.9,304.6],"t":["Arganzuela"],"f":9.5,"o":[-8.0,304.8],"a":"end","p":[145.3,304.8]},{"n":"Retiro","d":[[160.6,307.8],[149.2,290.4],[152.1,281.1],[177.7,279.3],[176.8,301.1]],"s":[163.5,293.1],"t":["Retiro"],"f":9.5,"o":[328.0,285.1],"a":"start","p":[165.0,292.4]}]};
+  function cellByName(n){ for(var i=0;i<DIST.cells.length;i++){ if(DIST.cells[i].n===n) return DIST.cells[i]; } return null; }
+  function cellCentre(n){
+    var c=cellByName(n); if(!c) return null;
+    var sx=(DIST.lon1-DIST.lon0)/DIST.w, sy=(DIST.lat1-DIST.lat0)/DIST.h;
+    return {lat:DIST.lat1-c.s[1]*sy, lon:DIST.lon0+c.s[0]*sx};
+  }
   var STEPS = [
     { id:'mode', kind:'single', q:'Which way do you prefer to communicate?',
       greet:'Hello.', big:true, tiles:true,
@@ -296,14 +303,16 @@
       opts:[['I had a stroke','patient'],['I am a volunteer','volunteer']],
       voiceDemo:'I had a stroke' },
     { id:'name', kind:'name', q:'What is your name?', sub:'First name is enough.', voiceDemo:'CARMEN' },
-    { id:'street', kind:'street', q:'Where do you live?',
-      sub:'Put the house on the map.', voiceDemo:'Chamberí' },
+    { id:'home', kind:'districts', q:'Where do you live?',
+      sub:'Choose your district on the map.', voiceDemo:'Chamberí' },
     { id:'travel', kind:'multi', q:'How would you get to a meeting?', hint:'You can choose more than one.',
       tiles:true, big:true,
       opts:[['I walk','walk'],['Bicycle','bike'],['Bus','bus'],['Metro','metro'],
             ['I drive by car','car'],['Someone drives me','driven'],['I cannot go out alone','nodoor']],
       patientOnlyOpts:['I cannot go out alone'], voiceDemo:'Metro' },
-    { id:'distance', kind:'radar', q:'How far could you go for a meeting?', voiceDemo:'Across Madrid' },
+    { id:'cango', kind:'districts', q:'Which parts of Madrid could you go to for a meeting?',
+      hint:'Choose all the districts you could travel to. Your own district is already selected.',
+      skip:function(){ return staysIn(); }, voiceDemo:'Chamberí' },
     { id:'time', kind:'single', q:'What time of day could you meet someone?', tiles:true,
       opts:[['Morning','morning'],['Afternoon','noon'],['Evening','evening']], voiceDemo:'Morning' },
     { id:'days', kind:'chips', q:'Which days could you meet someone?', hint:'You can choose more than one.',
@@ -328,8 +337,8 @@
   ];
 
   var LABELS = { mode:'How you communicate', role:'Who you are', name:'Name',
-    street:'Where you live', travel:'How you would travel',
-    distance:'How far you can go', time:'Time of day',
+    home:'Where you live', travel:'How you would travel',
+    cango:'Where you can go for a meeting', time:'Time of day',
     days:'Days', length:'Length of meeting', interests:'What you want to do',
     place:'Where you feel comfortable', helps:'What you ask of the other person' };
 
@@ -396,12 +405,12 @@
   function role(){ return state.a.role === 'I am a volunteer' ? 'volunteer' : 'patient'; }
   function isVoice(){ return state.a.mode === 'Voice'; }
   function isPics(){ return state.a.mode !== 'Writing'; }
-  function active(){ return STEPS.filter(function(s){ return !(s.patientOnly && role()==='volunteer'); }); }
+  function active(){ return STEPS.filter(function(s){ return !(s.patientOnly && role()==='volunteer') && !(s.skip && s.skip()); }); }
   function step(){ return active()[state.i]; }
-  function isQ(s){ return ['single','multi','chips','name','street','radar'].indexOf(s.kind)>=0; }
+  function isQ(s){ return ['single','multi','chips','name','street','radar','districts'].indexOf(s.kind)>=0; }
   function qIndex(){ var L=active(),n=0; for(var k=0;k<state.i;k++){ if(isQ(L[k])) n++; } return n+1; }
   function totalQ(){ return active().filter(isQ).length; }
-  function set(id,v){ state.a[id]=v; }
+  function set(id,v){ state.a[id]=v; if(id==='home') state.a.cango=[v]; }
   function get(id){ return state.a[id]; }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
@@ -517,9 +526,9 @@
     if(s.kind==='name') t += 'Choose the letters of your first name.';
     else if(s.kind==='radar') t += 'You can choose: ' +
       BANDS.map(function(b){ return b[0] + ', ' + b[1] + ', ' + b[2]; }).join('. ') + '.';
-    else if(s.kind==='street') t += 'Tap the map to put your house where you live. ' +
-      'You can then drag the house. The point is only used to measure distance. ' +
-      'The other person is never shown it, only your neighbourhood.';
+    else if(s.kind==='districts') t += 'Choose your district on the map. ' +
+      (s.id==='cango' ? 'You can choose more than one district.' : 'Choose one district.') +
+      ' The other person is only told your district.';
     else if(s.opts) t += 'You can choose: ' + optsFor(s).map(function(o){ return Array.isArray(o)?o[0]:o; }).join(', ') + '.';
     return t;
   }
@@ -580,7 +589,7 @@
       privacy + '<div id="sayout"></div>';
   }
 
-  var IL = { name:['abc','arr','patient'], street:['house','arr','pin'], travel:['house','arr','bus','arr','pin'],
+  var IL = { name:['abc','arr','patient'], home:['house','arr','pin'], cango:['house','arr','pin'], travel:['house','arr','bus','arr','pin'],
     distance:['house','arr','walk','arr','pin'], time:['clock','nav'],
     days:['calendar','arr','volunteer'], length:['clock'],
     interests:['coffee','ball','music','cards','chat'], place:['quiet','lively','indoor','outdoor'],
@@ -617,10 +626,9 @@
         html += '<div class="opts"><input id="nameField" class="field" type="text" value="'+esc(val||'')+'" ' +
                 'autocomplete="given-name" placeholder="Your name"></div>';
       }
-    } else if(s.kind==='street'){
-      html += '<div class="privacy">'+ico('lock',26)+'<span><strong>The spot you choose is only used to measure distance.</strong> ' +
-        'The other person never sees it. They are told your neighbourhood and roughly how far away you live.</span></div>';
-      html += mapHtml();
+    } else if(s.kind==='districts'){
+      html += '<div class="privacy">'+ico('lock',26)+'<span><strong>Your exact address is not requested.</strong> Choose a district; only the district is used for matching.</span></div>';
+      html += mapHtml(s.id, s.id==='cango');
     } else if(s.kind==='radar'){
       if(isPics()){
         html += radarHtml(val);
@@ -669,13 +677,14 @@
     }
 
     var ready = s.kind==='name' ? true :
-      (s.kind==='single'||s.kind==='radar'||s.kind==='street') ? !!val : (val||[]).length>0;
+      (s.kind==='single'||s.kind==='radar'||s.kind==='street'||(s.kind==='districts' && s.id==='home')) ? !!val : (val||[]).length>0;
     html += '<div class="foot">' +
       (state.i>0 ? '<button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' : '') +
       '<button class="btn primary" type="button" data-next="1"'+(ready?'':' disabled')+'>Continue</button>' +
       (s.kind==='name' ? '<button class="btn quiet" type="button" data-next="1">Skip</button>' : '') +
       '</div>';
     view.innerHTML = html; bind();
+    if(s.kind==='districts') wireMap(s.id, s.id==='cango');
     if(s.kind==='street') wireMap();
     if(s.kind==='radar' && isPics()) wireRadar();
   }
@@ -847,75 +856,51 @@
   }
   /* Real map: Leaflet + OpenStreetMap tiles. Same controls as before (arrows, + and -). */
   var MADRID = [40.4168, -3.7038], liveMap = null;
-  function mapHtml(){
-    var home = homePoint();
-    var s = '<div class="map live" id="map"><div id="leaflet"></div></div>';
-    s += '<div class="mapctl">' +
-      '<div class="pad">' +
-        '<button type="button" data-pan="up"    aria-label="Move the map up">'+ico('arrU',26)+'</button>' +
-        '<button type="button" data-pan="left"  aria-label="Move the map left">'+ico('arrL',26)+'</button>' +
-        '<button type="button" data-pan="right" aria-label="Move the map right">'+ico('arrR',26)+'</button>' +
-        '<button type="button" data-pan="down"  aria-label="Move the map down">'+ico('arrD',26)+'</button>' +
-      '</div>' +
-      '<div class="zoomer">' +
-        '<button type="button" data-zoom="in"  aria-label="Zoom in">'+ico('plus',30)+'</button>' +
-        '<button type="button" data-zoom="out" aria-label="Zoom out">'+ico('minus',30)+'</button>' +
-      '</div></div>';
-    s += '<p class="zlevel"><span id="zname"></span><button class="more" type="button" id="mapreset">Whole city</button></p>';
-    s += '<p class="maplabel" id="maplabel">'+(home?esc(home.area):'')+'</p>';
-    s += '<p class="mapsub" id="mapsub">'+(home
-      ? 'Drag the house if this is not quite right.'
-      : 'Tap the map where you live. Use + to zoom in first if you want to be exact.')+'</p>';
-    return s;
-  }
-  function wireMap(){
-    var box = document.getElementById('leaflet');
-    if(!box) return;
-    if(typeof L === 'undefined'){
-      box.innerHTML = '<p class="mapsub">The map could not load. Please check your internet connection.</p>';
-      return;
-    }
-    if(liveMap){ try{ liveMap.remove(); }catch(err){} liveMap = null; }
-    var home = homePoint(), label = document.getElementById('maplabel'), zn = document.getElementById('zname');
-    var m = liveMap = L.map(box, { zoomControl:false }).setView(home ? [home.lat, home.lon] : MADRID, home ? 15 : 12);
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19,
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(m);
-    var icon = L.divIcon({ className:'', html:'<div class="house-pin">'+ico('house',26)+'</div>', iconSize:[44,44], iconAnchor:[22,22] });
-    var marker = null;
-    function zoomText(){
-      var z = m.getZoom();
-      if(zn) zn.textContent = z <= 11 ? 'Whole city' : z <= 13 ? 'City' : z <= 15 ? 'Neighbourhood' : 'Street';
-    }
-    function commit(ll){
-      var area = nearestArea({ lat:ll.lat, lon:ll.lng });
-      if(label) label.textContent = area;
-      set('street', { lat:ll.lat, lon:ll.lng, area:area });
-      var sub = document.getElementById('mapsub');
-      if(sub) sub.textContent = 'Drag the house if this is not quite right. You can zoom in with + to move it more exactly.';
-      var btn = view.querySelector('[data-next]');
-      if(btn) btn.disabled = false;
-    }
-    function put(ll){
-      if(!marker){
-        marker = L.marker(ll, { icon:icon, draggable:true, keyboard:true, title:'Your home. Drag it to move it.' }).addTo(m);
-        marker.on('dragend', function(){ commit(marker.getLatLng()); });
-      } else marker.setLatLng(ll);
-    }
-    if(home) put(L.latLng(home.lat, home.lon));
-    m.on('click', function(e){ put(e.latlng); commit(e.latlng); });
-    m.on('zoomend', zoomText); zoomText();
-    setTimeout(function(){ m.invalidateSize(); }, 0);
-    view.querySelectorAll('[data-pan]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var sz = m.getSize(), d = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] }[b.getAttribute('data-pan')];
-        m.panBy([d[0]*sz.x*0.35, d[1]*sz.y*0.35]);
+  function mapHtml(id, multi){
+    var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad;
+    var on=function(n){return many.indexOf(n)>=0;};
+    var h='<div class="dmap" id="dmap"><svg viewBox="'+(-P)+' -12 '+(DIST.w+2*P)+' '+(DIST.h+24)+'" role="group" aria-label="The 21 districts of Madrid">';
+    h+='<path class="dhalo" d="M'+DIST.outline.map(function(q){return q.join(' ');}).join('L')+'Z"/>';
+    DIST.cells.forEach(function(c){
+      h+='<g class="dcell'+(on(c.n)?' on':'')+'" data-dist="'+esc(c.n)+'" role="button" tabindex="0" aria-pressed="'+on(c.n)+'" aria-label="'+esc(c.n)+'">';
+      h+='<path class="dshape" d="M'+c.d.map(function(q){return q.join(' ');}).join('L')+'Z"/>';
+      if(c.o){
+        h+='<path class="dlead" d="M'+c.p[0]+' '+c.p[1]+'L'+(c.o[0]+(c.a==='end'?4:-4))+' '+c.o[1]+'"/>';
+        h+='<circle class="ddot" cx="'+c.p[0]+'" cy="'+c.p[1]+'" r="2.2"/>';
+        h+='<rect class="dhit" x="'+(c.a==='end'?c.o[0]-P+2:c.o[0]-2)+'" y="'+(c.o[1]-11)+'" width="'+(P-4)+'" height="22" rx="4"/>';
+      }
+      var ax=c.o?c.o[0]:c.p[0], ay=c.o?c.o[1]:c.p[1];
+      c.t.forEach(function(line,i){
+        h+='<text class="dname" x="'+ax+'" y="'+(ay+(i-(c.t.length-1)/2)*c.f*1.05+c.f*.35).toFixed(1)+'" text-anchor="'+(c.o?c.a:'middle')+'" font-size="'+c.f+'">'+esc(line)+'</text>';
       });
+      h+='</g>';
     });
-    view.querySelectorAll('[data-zoom]').forEach(function(b){
-      b.addEventListener('click', function(){ if(b.getAttribute('data-zoom') === 'in') m.zoomIn(); else m.zoomOut(); });
+    h+='</svg></div><p class="maplabel" id="maplabel">'+esc(multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||''))+'</p>';
+    h+='<p class="mapsub">A simple map: the districts are in the right places, but the borders are simplified.</p>';
+    return h;
+  }
+  function wireMap(id, multi){
+    var box=document.getElementById('dmap'); if(!box) return;
+    var label=document.getElementById('maplabel');
+    function paint(){
+      var val=get(id), many=multi?(val||[]):(val?[val]:[]);
+      box.querySelectorAll('.dcell').forEach(function(g){
+        var on=many.indexOf(g.getAttribute('data-dist'))>=0;
+        g.classList.toggle('on',on); g.setAttribute('aria-pressed',on);
+      });
+      if(label) label.textContent=multi?(many.length?many.length+(many.length===1?' district':' districts')+' chosen':''):(val||'');
+      var btn=view.querySelector('[data-next]'); if(btn) btn.disabled=!(multi?many.length:val);
+    }
+    function choose(n){
+      if(!multi) set('home',n);
+      else {var cur=(get(id)||[]).slice(),i=cur.indexOf(n); if(i>=0) cur.splice(i,1); else cur.push(n); set(id,cur);}
+      paint();
+    }
+    box.querySelectorAll('.dcell').forEach(function(g){
+      g.addEventListener('click',function(){choose(g.getAttribute('data-dist'));});
+      g.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();choose(g.getAttribute('data-dist'));}});
     });
-    var r = document.getElementById('mapreset');
-    if(r) r.addEventListener('click', function(){ m.setView(MADRID, 12); });
+    paint();
   }
 
   /* ---------- how far can you walk? ----------
@@ -1016,7 +1001,7 @@
   function answerText(id){
     var v = get(id);
     if(v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length)) return 'Not answered';
-    if(v.lat !== undefined) return v.area + ' (a point you chose on the map)';
+    if(id==='home') return v + ' district';
     return Array.isArray(v) ? v.join(', ') : v;
   }
 
@@ -1045,10 +1030,7 @@
     var b = get('distance');
     return RADIUS_KM[b] === undefined ? 0 : RADIUS_KM[b];
   }
-  function staysIn(){
-    return (get('travel')||[]).indexOf('I cannot go out alone') >= 0 ||
-           get('distance') === 'I stay at home';
-  }
+  function staysIn(){ return (get('travel')||[]).indexOf('I cannot go out alone') >= 0; }
   function myLimitText(){
     if(staysIn())
       return 'you told us a meeting has to come to you, so you do not travel at all';
@@ -1062,41 +1044,32 @@
      Distance is filtered first, then days and time of day, and only then are the
      remaining people sorted by shared interests and by how close they live. */
   function findMatch(){
-    var pool0 = role()==='patient' ? VOLUNTEERS : PATIENTS;
-    var st = homePoint();
-    var time = get('time'), days = get('days')||[], ints = get('interests')||[], lens = get('length')||[];
-    var myR = myRadius(), noGo = staysIn();
-    if(!st) return { blocked:'nostreet' };
-
-    var near = [], closest = null;
+    var pool0=role()==='patient'?VOLUNTEERS:PATIENTS, st=homePoint();
+    var time=get('time'), days=get('days')||[], ints=get('interests')||[], lens=get('length')||[];
+    var noGo=staysIn(), allowed=noGo?[get('home')]:((get('cango')||[]).slice());
+    if(!st) return {blocked:'nostreet'};
+    if(!allowed.length) allowed=[get('home')];
+    var near=[];
     pool0.forEach(function(v){
-      var d = km(st, v), reach = myR + v.r, rec = { v:v, d:d, reach:reach };
-      if(d <= reach) near.push(rec);
-      else if(!closest || (d - reach) < (closest.d - closest.reach)) closest = rec;
+      if(allowed.indexOf(v.area)<0) return;
+      near.push({v:v,d:km(st,v)});
     });
-    if(!near.length) return { blocked:'distance', nearest:closest, myR:myR, noGo:noGo };
-
-    var free = near.filter(function(c){
+    if(!near.length) return {blocked:'area'};
+    var free=near.filter(function(c){
       if(time && c.v.times.indexOf(time)<0) return false;
-      if(days.length && !days.some(function(d){ return c.v.days.indexOf(d)>=0; })) return false;
-      if(lens.length && !lens.some(function(l){ return c.v.lens.indexOf(l)>=0; })) return false;
+      if(days.length && !days.some(function(d){return c.v.days.indexOf(d)>=0;})) return false;
+      if(lens.length && !lens.some(function(l){return c.v.lens.indexOf(l)>=0;})) return false;
       return true;
     });
-    if(!free.length) return { blocked:'time', myR:myR, noGo:noGo };
-
-    free.forEach(function(c){
-      c.shared = ints.filter(function(i){ return c.v.interests.indexOf(i)>=0; });
-    });
-    free.sort(function(a,b){
-      if(b.shared.length !== a.shared.length) return b.shared.length - a.shared.length;
-      return a.d - b.d;
-    });
-    var hit = free[0];
-    if(!hit.shared.length) return { blocked:'interests', myR:myR, noGo:noGo };
-    return { v:hit.v, d:hit.d, myR:myR, noGo:noGo,
-      day:(days.filter(function(d){ return hit.v.days.indexOf(d)>=0; })[0]),
-      len:(lens.filter(function(l){ return hit.v.lens.indexOf(l)>=0; })[0]),
-      shared:hit.shared[0] };
+    if(!free.length) return {blocked:'time'};
+    free.forEach(function(c){c.shared=ints.filter(function(i){return c.v.interests.indexOf(i)>=0;});});
+    free.sort(function(a,b){if(b.shared.length!==a.shared.length)return b.shared.length-a.shared.length;return a.d-b.d;});
+    var hit=free[0];
+    if(!hit.shared.length) return {blocked:'interests'};
+    return {v:hit.v,d:hit.d,noGo:noGo,
+      day:(days.filter(function(d){return hit.v.days.indexOf(d)>=0;})[0]),
+      len:(lens.filter(function(l){return hit.v.lens.indexOf(l)>=0;})[0]),
+      shared:hit.shared[0]};
   }
 
   function cardLines(list){
@@ -1115,7 +1088,9 @@
     var m = findMatch(), me = get('name') || 'You', html = '';
     if(m.blocked){
       var why;
-      if(m.blocked==='distance'){
+      if(m.blocked==='area'){
+        why = 'Nobody in the districts you selected is in the example matching list. Choose more districts or change your selection.';
+      } else if(m.blocked==='distance'){
         var n = m.nearest;
         why = 'The closest person lives ' + roughly(n.d) + ' away. ' +
           'Between you, you can cover ' + (Math.round((m.myR + n.v.r)*10)/10) + ' km, and that is not enough. ';
@@ -1124,7 +1099,8 @@
           : 'The limit is on their side: they can only travel ' + n.v.r + ' km from home.';
       } else {
         why = {
-          'nostreet':'We do not know where you live, so we cannot check any distance.',
+          'nostreet':'Choose your home district so we can look for a match.',
+          'area':'Nobody in the districts you selected is in the example matching list.',
           'time':'People live close enough, but nobody is free on your days, at your time of day, for the length you chose.',
           'interests':'People live close enough and are free when you are, but nobody wants to do the same thing as you.'
         }[m.blocked];
@@ -1237,8 +1213,8 @@
       b.addEventListener('click', function(){
         cancelRecognition();
         var s = step(), v = b.getAttribute('data-pick');
-        if(s.kind==='single'||s.kind==='radar'||s.kind==='street'){ set(s.id,v); }
-        else { var cur=get(s.id)||[], i=cur.indexOf(v); if(i>=0) cur.splice(i,1); else cur.push(v); set(s.id,cur); }
+        if(s.kind==='single'||s.kind==='radar'||s.kind==='street'||(s.kind==='districts' && s.id==='home')){ set(s.id,v); }
+        else { var cur=(get(s.id)||[]).slice(), i=cur.indexOf(v); if(i>=0) cur.splice(i,1); else cur.push(v); set(s.id,cur); }
         render();
       });
     });
