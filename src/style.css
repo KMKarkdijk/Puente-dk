@@ -302,3 +302,15 @@ h1 .sub{display:block;font-size:21px;font-weight:400;margin-top:8px}
   padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--accent)}
 .review-picture .ico{width:42px;height:42px}
 .review-picture.empty{color:var(--muted)}
+
+/* Picture-mode district map: a short visual instruction, clear selected markers,
+   and a large house-led confirmation beneath the map. */
+.district-instruction{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:14px 16px;
+  border-radius:14px;background:var(--accent-soft);color:var(--ink);font-size:19px;font-weight:700;line-height:1.3}
+.district-instruction .ico{flex:none;color:var(--accent)}
+.dcheck-bg{fill:var(--accent);stroke:var(--surface);stroke-width:1.5;pointer-events:none}
+.dcheck{fill:none;stroke:var(--accent-ink);stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.district-confirm{display:flex;align-items:center;justify-content:center;gap:12px;min-height:72px;
+  margin:10px 0 12px;padding:12px 14px;border:2px solid var(--accent);border-radius:14px;
+  background:var(--accent-soft);color:var(--accent);font-size:19px;font-weight:700;line-height:1.35;text-align:left}
+.district-confirm .ico{flex:none}
