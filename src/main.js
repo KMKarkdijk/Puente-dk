@@ -875,7 +875,7 @@
     var val=get(id), many=multi?(val||[]):(val?[val]:[]), P=DIST.pad, pictureMode=state.a.mode==='picture';
     var on=function(n){return many.indexOf(n)>=0;};
     var h='';
-    if(pictureMode) h+='<div class="district-instruction">'+ico('house',30)+'<span>'+(multi?'Choose the districts you could visit.':'Where do you live? Tap your district on the map.')+'</span></div>';
+    if(pictureMode) h+='<div class="district-instruction">'+ico('house',34)+'<div><strong>'+(multi?'Which areas could you visit?':'Where is your home?')+'</strong><div class="district-guide">'+(multi?'<span class="guide-step">'+ico('pin',25)+'<b>Look at the map</b></span><span class="guide-step">'+ico('check',25)+'<b>Tap every area you could visit</b></span>':'<span class="guide-step">'+ico('house',25)+'<b>Find the area where you live</b></span><span class="guide-step">'+ico('pin',25)+'<b>Tap that area once</b></span>')+'</div></div></div>';
     h+='<div class="dmap" id="dmap"><svg viewBox="'+(-P)+' -12 '+(DIST.w+2*P)+' '+(DIST.h+24)+'" role="group" aria-label="The 21 districts of Madrid">';
     h+='<path class="dhalo" d="M'+DIST.outline.map(function(q){return q.join(' ');}).join('L')+'Z"/>';
     DIST.cells.forEach(function(c){
