@@ -621,7 +621,11 @@
     html += voiceBar(s);
 
     if(s.kind==='name'){
-      if(isPics()){
+      if(isVoice()){
+        var typedVoice = val || '';
+        html += '<div class="namebox" id="nameshow">' +
+          (typedVoice ? esc(typedVoice) : '<span class="ph">Say your name using the microphone above</span>') + '</div>';
+      } else if(isPics()){
         var typed = val || '';
         html += '<div class="namebox" id="nameshow">' +
           (typed ? esc(typed) : '<span class="ph">Choose the letters of your name</span>') + '</div>';
@@ -1013,6 +1017,27 @@
     return Array.isArray(v) ? v.join(', ') : v;
   }
 
+  function reviewIcon(id, value){
+    var s = null, icons = {
+      home:'pin', cango:'pin', time:'clock', days:'calendar',
+      length:'clock', place:'house', helps:'heart', name:'user',
+      travel:'bus', role:'user', mode:'image'
+    };
+    for(var i=0;i<STEPS.length;i++){
+      if(STEPS[i].id===id && STEPS[i].opts){
+        for(var j=0;j<STEPS[i].opts.length;j++){
+          if(STEPS[i].opts[j][0]===value){ s=STEPS[i].opts[j][1]; break; }
+        }
+      }
+    }
+    if(!s && id==='interests'){
+      for(var k=0;k<INTERESTS.length;k++) if(INTERESTS[k][0]===value){ s=INTERESTS[k][1]; break; }
+    }
+    if(!s && id==='days') s='calendar';
+    if(!s) s=icons[id] || 'check';
+    return s;
+  }
+
   function renderReview(){
     var say = ['This is what I understood. Is it right?'];
     Object.keys(LABELS).forEach(function(id){
@@ -1020,13 +1045,25 @@
       say.push(LABELS[id] + ': ' + answerText(id) + '.');
     });
     state.pageSay = say.join(' ');
+    var pictorialReview = state.a.mode === 'Pictures';
     var html = '<h1>This is what I understood.<span class="sub">Is it right?</span></h1>' +
-      listenBtn('page') + '<ul class="review">';
+      listenBtn('page') + '<ul class="review'+(pictorialReview?' picture-review':'')+'">';
     Object.keys(LABELS).forEach(function(id){
       if(id==='helps' && role()==='volunteer') return;
-      html += '<li><div class="grow"><div class="q">'+esc(LABELS[id])+'</div>' +
-        '<div class="a">'+esc(answerText(id))+'</div></div>' +
-        '<button class="btn quiet" type="button" data-edit="'+id+'">Change</button></li>';
+      var raw = get(id), values = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+      if(pictorialReview){
+        var visual = values.map(function(value){
+          var symbol = reviewIcon(id, value);
+          return '<span class="review-picture" role="img" aria-label="'+esc(String(value))+'">'+ico(symbol,42)+'</span>';
+        }).join('');
+        if(!visual) visual = '<span class="review-picture empty" aria-label="Not answered">'+ico('minus',36)+'</span>';
+        html += '<li><div class="grow"><div class="q">'+esc(LABELS[id])+'</div><div class="review-pictures">'+visual+'</div></div>' +
+          '<button class="btn quiet" type="button" data-edit="'+id+'">Change</button></li>';
+      } else {
+        html += '<li><div class="grow"><div class="q">'+esc(LABELS[id])+'</div>' +
+          '<div class="a">'+esc(answerText(id))+'</div></div>' +
+          '<button class="btn quiet" type="button" data-edit="'+id+'">Change</button></li>';
+      }
     });
     html += '</ul><div class="foot"><button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' +
       '<button class="btn primary" type="button" data-next="1">Yes, that is right</button></div>';
