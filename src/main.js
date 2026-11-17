@@ -556,6 +556,14 @@
     }
     var privacy = '<p class="voice-privacy">Your browser handles speech recognition. Depending on your browser, audio may be sent to its speech service. Puente does not record or store audio.</p>';
     var play = '<button class="vbtn alt" type="button" data-say="q">'+ico('play',22)+' Play the question</button>';
+    /* Voice input is useful for the open-ended name question. For questions
+       answered by choosing options or districts, keep playback but use the
+       visible controls to make the actual selection. */
+    if(s.id !== 'name'){
+      return '<div class="voicebar">'+play+'</div>' +
+        '<p class="voice-help">Choose the answer that is right for you below.</p>' +
+        '<div id="sayout"></div>';
+    }
     if(!hasSpeechRecognition()){
       return '<div class="voicebar">'+play+'</div><p class="voice-help" role="status">Speech input is not supported by this browser. Please use the answer choices or the name keyboard.</p>' +
         privacy + '<div id="sayout"></div>';
