@@ -292,3 +292,13 @@ h1 .sub{display:block;font-size:21px;font-weight:400;margin-top:8px}
 .dcell:focus-visible .dshape{stroke:var(--ink);stroke-width:2.6}
 .maplabel{text-align:center;font-size:22px;font-weight:700;margin:0 0 4px;min-height:30px}
 .mapsub{text-align:center;color:var(--muted);font-size:15px;margin:0 0 22px}
+
+
+/* Picture-mode review: show the selected answers as the same visual symbols
+   used during the questions, while keeping labels available to assistive tech. */
+.picture-review li{align-items:center}
+.review-pictures{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:8px}
+.review-picture{display:inline-flex;align-items:center;justify-content:center;min-width:54px;min-height:54px;
+  padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--accent)}
+.review-picture .ico{width:42px;height:42px}
+.review-picture.empty{color:var(--muted)}
