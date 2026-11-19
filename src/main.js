@@ -311,7 +311,7 @@
       tiles:true, big:true,
       opts:[['I walk','walk'],['Bicycle','bike'],['Bus','bus'],['Metro','metro'],
             ['I drive by car','car'],['Someone drives me','driven'],['I cannot go out alone','nodoor']],
-      patientOnlyOpts:['I cannot go out alone'], voiceDemo:'Metro' },
+      voiceDemo:'Metro' },
     { id:'cango', kind:'districts', q:'Which parts of Madrid could you go to for a meeting?',
       hint:'Choose all the districts you could travel to. Your own district is already selected.',
       skip:function(){ return staysIn(); }, voiceDemo:'Chamberí' },
