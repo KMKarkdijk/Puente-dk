@@ -296,6 +296,49 @@
     var sx=(DIST.lon1-DIST.lon0)/DIST.w, sy=(DIST.lat1-DIST.lat0)/DIST.h;
     return {lat:DIST.lat1-c.s[1]*sy, lon:DIST.lon0+c.s[0]*sx};
   }
+  /* Matching reach is measured against district boundaries, not district centres.
+     These fictional profiles use the same travel-radius rule as the supplied ZIP. */
+  DIST.kmPerUnit = (DIST.lon1-DIST.lon0) * 111.32 *
+                   Math.cos((DIST.lat0+DIST.lat1)/2*Math.PI/180) / DIST.w;
+  function distXY(pt){
+    return {x:(pt.lon-DIST.lon0)/(DIST.lon1-DIST.lon0)*DIST.w,
+            y:(DIST.lat1-pt.lat)/(DIST.lat1-DIST.lat0)*DIST.h};
+  }
+  function distToCell(p,c){
+    var inside=false,best=1e18;
+    for(var i=0;i<c.d.length;i++){
+      var a=c.d[i],b=c.d[(i+1)%c.d.length];
+      if((a[1]>p.y)!==(b[1]>p.y)){
+        var xi=a[0]+(p.y-a[1])*(b[0]-a[0])/(b[1]-a[1]);
+        if(p.x<xi) inside=!inside;
+      }
+      var dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy;
+      var u=L===0?0:Math.max(0,Math.min(1,((p.x-a[0])*dx+(p.y-a[1])*dy)/L));
+      var qx=a[0]+u*dx,qy=a[1]+u*dy;
+      best=Math.min(best,Math.sqrt((p.x-qx)*(p.x-qx)+(p.y-qy)*(p.y-qy)));
+    }
+    return inside?0:best*DIST.kmPerUnit;
+  }
+  var AREA_TO_DISTRICT = {'San Blas':'San Blas-Canillejas','Pinto':'Outside Madrid'};
+  function profileHome(v){
+    return AREA_TO_DISTRICT[v.area] || (cellByName(v.area)?v.area:districtOf(v));
+  }
+  function reachable(pt,radius,home){
+    var p=distXY(pt),out=home?[home]:[];
+    if(radius<=0 && home) return out;
+    DIST.cells.forEach(function(c){
+      if(out.indexOf(c.n)>=0) return;
+      if(distToCell(p,c)<=radius) out.push(c.n);
+    });
+    return out;
+  }
+  function fillReach(list){
+    list.forEach(function(v){
+      v.home=profileHome(v);
+      v.can=reachable({lat:v.lat,lon:v.lon},v.r,cellByName(v.home)?v.home:null);
+    });
+  }
+  fillReach(VOLUNTEERS); fillReach(PATIENTS);
   var STEPS = [
     { id:'mode', kind:'single', q:'Which way do you prefer to communicate?',
       greet:'Hello.', big:true, tiles:true,
@@ -1110,30 +1153,45 @@
      the sum of what each of them can travel: d(A,B) <= radius(A) + radius(B).
      Distance is filtered first, then days and time of day, and only then are the
      remaining people sorted by shared interests and by how close they live. */
+  function myReach(){
+    var home=get('home');
+    if(!home) return [];
+    if(staysIn()) return [home];
+    var picked=(get('cango')||[]).slice();
+    if(picked.indexOf(home)<0) picked.unshift(home);
+    return picked;
+  }
   function findMatch(){
-    var pool0=role()==='patient'?VOLUNTEERS:PATIENTS, st=homePoint();
-    var time=get('time'), days=get('days')||[], ints=get('interests')||[], lens=get('length')||[];
-    var noGo=staysIn(), allowed=noGo?[get('home')]:((get('cango')||[]).slice());
-    if(!st) return {blocked:'nostreet'};
-    if(!allowed.length) allowed=[get('home')];
-    var near=[];
+    var pool0=role()==='patient'?VOLUNTEERS:PATIENTS, home=get('home');
+    var st=homePoint(), time=get('time'), days=get('days')||[];
+    var ints=get('interests')||[], lens=get('length')||[];
+    var mine=myReach(), noGo=staysIn();
+    if(!home || !st) return {blocked:'nostreet'};
+    var near=[], closest=null;
     pool0.forEach(function(v){
-      if(allowed.indexOf(v.area)<0) return;
-      near.push({v:v,d:km(st,v)});
+      var both=mine.filter(function(d){return (v.can||[]).indexOf(d)>=0;});
+      var d=km(st,v), rec={v:v,d:d,where:both[0],both:both};
+      if(both.length) near.push(rec);
+      else if(!closest || d<closest.d) closest=rec;
     });
-    if(!near.length) return {blocked:'area'};
+    if(!near.length) return {blocked:'distance',nearest:closest,mine:mine,noGo:noGo};
     var free=near.filter(function(c){
       if(time && c.v.times.indexOf(time)<0) return false;
       if(days.length && !days.some(function(d){return c.v.days.indexOf(d)>=0;})) return false;
       if(lens.length && !lens.some(function(l){return c.v.lens.indexOf(l)>=0;})) return false;
       return true;
     });
-    if(!free.length) return {blocked:'time'};
-    free.forEach(function(c){c.shared=ints.filter(function(i){return c.v.interests.indexOf(i)>=0;});});
-    free.sort(function(a,b){if(b.shared.length!==a.shared.length)return b.shared.length-a.shared.length;return a.d-b.d;});
+    if(!free.length) return {blocked:'time',mine:mine,noGo:noGo};
+    free.forEach(function(c){
+      c.shared=ints.filter(function(i){return c.v.interests.indexOf(i)>=0;});
+    });
+    free.sort(function(a,b){
+      if(b.shared.length!==a.shared.length) return b.shared.length-a.shared.length;
+      return a.d-b.d;
+    });
     var hit=free[0];
-    if(!hit.shared.length) return {blocked:'interests'};
-    return {v:hit.v,d:hit.d,noGo:noGo,
+    if(!hit.shared.length) return {blocked:'interests',mine:mine,noGo:noGo};
+    return {v:hit.v,d:hit.d,where:hit.where,mine:mine,noGo:noGo,
       day:(days.filter(function(d){return hit.v.days.indexOf(d)>=0;})[0]),
       len:(lens.filter(function(l){return hit.v.lens.indexOf(l)>=0;})[0]),
       shared:hit.shared[0]};
@@ -1155,19 +1213,15 @@
     var m = findMatch(), me = get('name') || 'You', html = '';
     if(m.blocked){
       var why;
-      if(m.blocked==='area'){
-        why = 'Nobody in the districts you selected is in the example matching list. Choose more districts or change your selection.';
-      } else if(m.blocked==='distance'){
-        var n = m.nearest;
-        why = 'The closest person lives ' + roughly(n.d) + ' away. ' +
-          'Between you, you can cover ' + (Math.round((m.myR + n.v.r)*10)/10) + ' km, and that is not enough. ';
-        why += (m.myR <= n.v.r)
-          ? 'The limit is on your side: ' + myLimitText() + '.'
-          : 'The limit is on their side: they can only travel ' + n.v.r + ' km from home.';
+      if(m.blocked==='distance'){
+        var n=m.nearest;
+        why='There is no district that both you and a possible match can reach. You could go to '+
+          (m.mine||[]).join(', ')+'. '+
+          (n?'The nearest example profile is in '+n.v.area+'.':'No suitable example profile is available.');
+        if(m.noGo) why+=' Because you cannot go out alone, a possible match would need to be able to come to your district.';
       } else {
         why = {
           'nostreet':'Choose your home district so we can look for a match.',
-          'area':'Nobody in the districts you selected is in the example matching list.',
           'time':'People live close enough, but nobody is free on your days, at your time of day, for the length you chose.',
           'interests':'People live close enough and are free when you are, but nobody wants to do the same thing as you.'
         }[m.blocked];
@@ -1183,22 +1237,22 @@
     }
 
     var other = m.v, mine = role()==='patient' ? (get('helps')||[]) : null;
-    state.pageSay = 'You matched with ' + other.name + ', ' + other.age + '. Both of you said yes. ' +
+    state.pageSay = 'A possible match is ' + other.name + ', ' + other.age + '. This is a suggested match based on fictional example profiles, not a confirmation from the other person. ' +
       m.shared + ' together, ' + (m.day||'a day you are both free') + ', ' +
       (get('time')||'morning').toLowerCase() + ', for ' + (m.len||'45 minutes') + '. ' +
       other.name + ' lives in ' + other.area + ', ' + roughly(m.d) + ' from you. ' +
       other.note + ' ' + (role()==='patient'
-        ? 'Before you meet, we will send ' + other.name + ' this: ' + cardLines(mine).join(' ')
+        ? 'If this match is later agreed, these requests can be shared with ' + other.name + ': ' + cardLines(mine).join(' ')
         : other.name + ' asks you this: ' + cardLines(other.helps).join(' '));
 
-    html += '<h1>You matched with '+esc(other.name)+'.</h1>' + listenBtn('page') +
+    html += '<h1>A possible match: '+esc(other.name)+'.</h1>' + listenBtn('page') +
       '<div class="pair"><span class="ava me">'+esc((me.charAt(0)||'?').toUpperCase())+'</span>' +
       ico('chain',30).replace('class="ico"','class="ico link"') +
       '<span class="ava">'+esc(other.name.charAt(0))+'</span></div>' +
       '<p class="who">'+esc(me)+' · '+esc(other.name)+', '+other.age+'<br>' +
-      '<span class="badge">'+ico('check',16)+' Both of you said yes</span></p>';
+      '<span class="badge">Suggested match · fictional profile</span></p>';
 
-    html += '<div class="callout"><p class="kicker">Your meeting</p>' +
+    html += '<div class="callout"><p class="kicker">A possible meeting</p>' +
       '<h2 style="font-family:var(--font-display);font-size:24px;font-weight:600;margin:0 0 8px">'+esc(m.shared)+' together</h2>' +
       '<p><strong>'+esc(m.day||'A day you are both free')+', '+esc((get('time')||'morning').toLowerCase())+
       ' · '+esc(m.len||'45 minutes')+'</strong></p>' +
@@ -1207,19 +1261,18 @@
 
     if(m.noGo){
       html += '<div class="callout warn"><h2>You told us you cannot go out alone</h2>' +
-        '<p>So the meeting has to happen at your home, or with someone who comes with you. ' +
-        esc(other.name)+' can travel the whole way. The partner organisation arranges this part, not the app.</p></div>';
+        '<p>A possible meeting would need to take place in your district, or with someone accompanying you. This prototype does not arrange transport.</p></div>';
     }
 
     html += '<div class="saycard"><p class="kicker">' +
-      (role()==='patient' ? 'Sent to '+esc(other.name)+' before you meet' : esc(other.name)+' asks you this') +
+      (role()==='patient' ? 'Communication requests to share if agreed' : esc(other.name)+' asks you this') +
       '</p><h2 style="margin:0 0 4px">' +
       (role()==='patient' ? 'What I ask of you' : 'What '+esc(other.name)+' asks of you') + '</h2><ul>' +
       cardLines(role()==='patient' ? mine : other.helps).map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('') +
       '</ul></div>';
 
     html += '<div class="card"><p class="kicker">What was checked before matching</p><ul class="checks">' +
-      ['Distance between your homes: '+esc(roughly(m.d))+'. You can go '+m.myR+' km, '+esc(other.name)+' can go '+other.r+' km, so together you cover '+(Math.round((m.myR+other.r)*10)/10)+' km',
+      ['Travel reach: both profiles can reach '+esc(m.where)+'. The estimated straight-line distance between the selected home district and the example profile is '+esc(roughly(m.d))+'.',
        'How you would travel: '+esc((get('travel')||['not answered']).join(', ')),
        'Days and time you are both free: '+esc((get('days')||[]).join(', ')||'not answered')+' · '+esc(get('time')||''),
        'A meeting length you both accept: '+esc(m.len||''),
@@ -1227,7 +1280,7 @@
       ].map(function(t){ return '<li>'+ico('check',18)+'<span>'+t+'</span></li>'; }).join('') + '</ul></div>';
 
     html += '<div class="card"><p class="kicker">What this prototype does not do</p>' +
-      '<p>It does not verify volunteers, arrange transport, or follow up after a meeting. Those belong to a partner organisation and to a named person there.</p>' +
+      '<p>All profiles and matching outcomes are fictional examples. A suggested match is not an acceptance by the other person. This prototype does not verify volunteers, collect a second person's consent, arrange transport, or follow up after a meeting.</p>' +
       '<p>The streets here are examples with fixed coordinates: there is no map service behind them, and the straight-line distance ignores rivers, hills and bus routes. Real home addresses would need secure storage and a lawful basis to hold them, which this prototype does not have.</p></div>';
 
     html += '<div class="foot"><button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' +
