@@ -1872,7 +1872,11 @@
       state.dbStatus=status; state.dbBusy=false; state.i=active().length-1; render();
     }).catch(function(e){
       state.dbBusy=false; state.dbError=e.message||'Your answers could not be saved. Please try again.';
-      renderReview();
+      if(state.db){
+        state.resumePrompt=true; state.i=0; renderResume();
+      } else {
+        renderReview();
+      }
     });
   }
 
