@@ -1280,7 +1280,7 @@
       ].map(function(t){ return '<li>'+ico('check',18)+'<span>'+t+'</span></li>'; }).join('') + '</ul></div>';
 
     html += '<div class="card"><p class="kicker">What this prototype does not do</p>' +
-      '<p>All profiles and matching outcomes are fictional examples. A suggested match is not an acceptance by the other person. This prototype does not verify volunteers, collect a second person's consent, arrange transport, or follow up after a meeting.</p>' +
+      '<p>All profiles and matching outcomes are fictional examples. A suggested match is not an acceptance by the other person. This prototype does not verify volunteers, collect consent from a second person, arrange transport, or follow up after a meeting.</p>' +
       '<p>The streets here are examples with fixed coordinates: there is no map service behind them, and the straight-line distance ignores rivers, hills and bus routes. Real home addresses would need secure storage and a lawful basis to hold them, which this prototype does not have.</p></div>';
 
     html += '<div class="foot"><button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' +
