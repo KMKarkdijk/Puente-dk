@@ -1,64 +1,71 @@
 # Puente
 
-Picture-first questionnaire (modes W = Writing, P = Pictures, V = Voice). Static website, vanilla JavaScript.
+Picture-first questionnaire (modes Writing, Pictures and Voice). Static website, vanilla JavaScript.
 
-## What it is
-- **Framework / language:** none. Plain HTML, CSS and JavaScript (ES5 style), no framework, no bundler.
-- **Libraries (CDN, pinned):** Leaflet 1.9.4 (real map), Google Fonts. Map tiles: OpenStreetMap.
-- **Build:** `npm run build` copies the site into `dist/` and writes `dist/config.js`. No dependencies to install.
+## Supabase-connected two-sided matching
 
-## Files
-| File | Purpose |
+The branch `feature/supabase-two-sided-matching` now connects the questionnaire to the Supabase RPC API:
+
+- Hulpvragers and volunteers submit their forms separately.
+- Only a public Supabase key is sent to the browser. Never expose a service-role or secret key.
+- Participant answers, match proposals and token hashes are stored in Supabase.
+- A random 256-bit private participant token is saved in that browser's local storage so the participant can return on the same device/browser.
+- Each person must accept independently. The match is confirmed only after both accept.
+- Participants can refresh their private status later; the token expires after 12 hours.
+- The cleanup job runs every minute and deletes expired participants, tokens and matches.
+- Matching checks overlapping days, time of day, meeting length and interests, compatible selected districts, and straight-line distance against the combined travel radii. The website currently estimates travel radius from the selected transport mode (walking 2 km, bicycle 5 km, bus/metro/car/lift 15 km; cannot travel alone 0 km). This is a prototype approximation, not route planning.
+
+## Supabase setup
+
+The database project is already connected and its migrations have been applied. For a Vercel build, set these Environment Variables for **Production** and **Preview**:
+
+| Name | Value |
 |---|---|
-| `index.html` | page shell, loads everything |
-| `src/main.js` | the whole app (questions, matching, map, results) |
-| `src/style.css` | all styling |
-| `src/lib/supabase.js` | optional database client (not used by the UI yet) |
-| `scripts/build.mjs` | build script (also blocks secret keys) |
-| `package.json`, `vercel.json` | build scripts, Vercel settings and security headers |
-| `.env.example` | variable names, no secrets |
-| `supabase/schema.sql` | proposed tables and Row Level Security |
+| `SUPABASE_URL` | `https://yuulhnugryckrqcwpwxj.supabase.co` |
+| `SUPABASE_PUBLISHABLE_KEY` | The project's public `sb_publishable_...` key from Supabase → Project Settings → API Keys |
 
-## Run and build locally
+A legacy public anon key can be used as `SUPABASE_ANON_KEY` if needed. Do not use `sb_secret_...` or a service-role key. The build script refuses Vercel builds without these public settings and rejects secret keys.
+
+## Migrations and tests
+
+Migrations in order:
+1. `supabase/migrations/202611190001_puente_core_tables.sql`
+2. `supabase/migrations/202611190002_puente_matching_consent_rpc.sql`
+3. `supabase/migrations/202611190003_puente_one_active_match_per_participant.sql`
+4. `supabase/migrations/20261119180000_puente_school_project_12h_retention.sql`
+5. `supabase/migrations/20261119193000_puente_frontend_distance_and_private_status.sql`
+
+The test SQL files in `supabase/tests/` use disposable records. Database-level integration tests have verified that:
+- A proposal is created for compatible profiles.
+- The first acceptance does not confirm the match.
+- The second independent acceptance confirms it.
+- A distance-incompatible pair is rejected.
+- The actual 20 patient and 20 volunteer profiles embedded in `src/main.js` were evaluated as a 20×20 matrix (400 possible pairs; 57 compatible pairs under the prototype's inferred travel/district assumptions). Two known hard cases, Rosa (no shared interests) and Begoña (outside the local matching area), produced no compatible pair in that matrix.
+- Test records were removed after the tests.
+
+These are database and static-code checks, not a full browser end-to-end test across two real browsers. The website still needs a live Preview deployment check before production use.
+
+## Build and local run
+
 Requires Node 18+.
+
+```bash
+npm run build
+npm run dev
 ```
-npm run build      # creates dist/
-npm run dev        # builds and serves on http://localhost:3000
-```
-Do not open `index.html` by double-clicking after a fresh checkout: `config.js` only exists after `npm run build`.
 
-## What needs a backend
-| Feature | Today | For production |
-|---|---|---|
-| Volunteers and matching | hard-coded demo people in `main.js` | database (Supabase `volunteers`) |
-| Sending the request to a person | shown on screen only | database or email service (`requests` table, or a server function that sends mail) |
-| Accounts / login | none | Supabase Auth, if people need to return |
-| File storage | none needed | none |
-| Voice mode | browser `SpeechRecognition` / `webkitSpeechRecognition` (English, en-GB); no audio recording or storage by Puente | browser support varies; depending on the browser, audio may be processed by its speech provider; no Puente backend is used |
-| External APIs | OpenStreetMap tiles, Google Fonts | OSM's public tile server is for light use; for real traffic use a tile provider (MapTiler, Stadia, Mapbox) |
+For a local Supabase-connected build, set `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` in the environment before `npm run build`. The build writes `dist/config.js`; only the public URL/key are included.
 
-Nothing here needs a backend to run today. The site works as it is.
+## Security, privacy and project limits
 
-## Secrets
-- The browser only ever receives `SUPABASE_URL` and `SUPABASE_ANON_KEY` (public by design; Row Level Security protects the data).
-- The build fails if that variable holds a `service_role` or `sb_secret_` key.
-- Never put API keys for other services in `src/`. Use a Vercel serverless function (`/api/...`) and a Vercel environment variable instead.
+- Row Level Security is enabled and forced on all participant, token and match tables. Direct table access is revoked; the browser calls narrow token-authenticated RPC functions.
+- The public RPCs are SECURITY DEFINER functions by design for this no-account prototype. Supabase's security advisor therefore still reports warnings for public execution, and the tables produce informational RLS-without-policy notices. Do not interpret this as a production security certification.
+- The token is a bearer credential stored in local storage. Anyone with access to that browser profile can act as that participant. Do not use shared/public devices.
+- Public registration has no CAPTCHA or rate limiting. This is a school prototype only.
+- Participant answers can reveal health-related information. Before real-world use, complete a GDPR/AVG review, establish a lawful basis and participant notices, review backups/log retention, add abuse protection, and arrange safeguarding/accessibility oversight.
+- Straight-line distance is only an approximation. It does not calculate roads, transit time, terrain or actual meeting arrangements.
+- Voice recognition is browser-provided; audio may be processed by the browser's speech provider. Puente does not record or store audio.
 
-## Privacy (important before using with real participants)
-Answers include a name, a home location and the fact that someone had a stroke. In the EU that is health data (GDPR, special category). Before using this prototype with real participants, complete a privacy and accessibility review and provide an appropriate privacy notice and lawful basis.
+## Vercel deployment
 
-Voice input uses the browser's built-in speech-recognition API. Puente itself does not record or store audio, but the browser may send audio to an external speech provider; this depends on the browser and its settings. Check the provider's terms, processing location and retention before use with real participants. The app does not save the transcript to a database. Google Fonts loaded from Google's servers is also a GDPR point; you can self-host the two font families instead.
-
-## Deploy to Vercel
-1. Create a GitHub repo and push this folder (`.gitignore` already excludes `dist`, `.env`).
-2. vercel.com > Add New > Project > import the repo.
-3. Framework Preset: **Other**. Build Command: `npm run build`. Output Directory: `dist` (`vercel.json` already says this).
-4. Only if you use Supabase: Settings > Environment Variables, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` (Production and Preview). Deploy.
-5. Open the URL and test: pick a home on the map, finish the questions, check the browser console for errors.
-6. Optional: Settings > Domains to add your own domain.
-CLI alternative: `npm i -g vercel`, then `vercel` (test) and `vercel --prod`.
-
-## Supabase (optional)
-1. Create a project, run `supabase/schema.sql` in the SQL editor.
-2. Copy Project URL and the anon/publishable key into the Vercel variables above (and into a local `.env` if you export them before `npm run build`).
-3. In `main.js` call `PuenteDB.select('volunteers')` or `PuenteDB.insert('requests', {...})` where the app should use real data.
+GitHub reports a Vercel Preview check for this repository, so the repository appears linked to Vercel. The current Preview check is failing. The build script now deliberately fails a Vercel build when the Supabase public environment variables are missing; add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` for Preview and Production, then redeploy. Vercel deployment controls/logs are not available through this workspace, so the Preview must be retriggered and checked in the Vercel dashboard. Verify the Preview workflow with two separate browser profiles before promoting to Production. Do not deploy as a real service for patients or volunteers.

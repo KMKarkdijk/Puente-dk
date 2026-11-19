@@ -1014,7 +1014,8 @@
 
   /* interests: all fourteen are shown from the start, so showAll begins open */
   function freshState(){ return { i:0, a:{}, showAll:{interests:true}, rec:null, heard:null,
-    voiceError:'', pageSay:'', mapView:null }; }
+    voiceError:'', pageSay:'', mapView:null, db:null, dbStatus:null, dbError:'', dbBusy:false,
+    resumePrompt:!!(window.PuenteDB && window.PuenteDB.getToken()) }; }
   var state = freshState();
   var view = document.getElementById('view');
   var sheet = document.getElementById('sheet');
@@ -1157,6 +1158,8 @@
 
   /* ---------- render ---------- */
   function render(){
+    if(state.dbStatus){ return renderDatabaseResult(); }
+    if(state.i===0 && state.resumePrompt){ return renderResume(); }
     var s = step(), q = isQ(s);
     document.getElementById('steps').textContent = q ? ('Question '+qIndex()+' of '+totalQ()) : '';
     document.getElementById('bar').style.width = (q ? (qIndex()-1)/totalQ()*100 : 100)+'%';
@@ -1703,7 +1706,8 @@
       }
     });
     html += '</ul><div class="foot"><button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' +
-      '<button class="btn primary" type="button" data-next="1">Yes, that is right</button></div>';
+      '<button class="btn primary" type="button" data-next="1"'+(state.dbBusy?' disabled':'')+'>Send securely</button></div>' +
+      (state.dbError ? '<p class="callout warn" role="alert">'+esc(state.dbError)+'</p>' : '');
     view.innerHTML = html; bind();
   }
 
@@ -1766,7 +1770,142 @@
     return out;
   }
 
+
+  function dbAnswers(){
+    var home = get('home') || '';
+    var point = cellCentre(home);
+    var travel = get('travel') || [];
+    var radius = 0;
+    if(travel.indexOf('I walk')>=0) radius=Math.max(radius,2);
+    if(travel.indexOf('Bicycle')>=0) radius=Math.max(radius,5);
+    if(['Bus','Metro','I drive by car','Someone drives me'].some(function(x){return travel.indexOf(x)>=0;})) radius=Math.max(radius,15);
+    if(travel.indexOf('I cannot go out alone')>=0) radius=0;
+    return {
+      name:(get('name')||'').trim().slice(0,80),
+      home:home,
+      cango:(get('cango')||[home]).slice(),
+      lat:point ? point.lat : null,
+      lon:point ? point.lon : null,
+      radius_km:radius,
+      travel:travel,
+      days:get('days')||[],
+      time:get('time')||'',
+      length:get('length')||[],
+      interests:get('interests')||[],
+      place:get('place')||[],
+      helps:get('helps')||[]
+    };
+  }
+
+  function renderResume(){
+    document.getElementById('steps').textContent='';
+    document.getElementById('bar').style.width='0%';
+    view.innerHTML='<h1>Welcome back.</h1><p class="lead">You have a private Puente return link saved in this browser. You can check whether someone has been matched with you.</p>' +
+      '<div class="foot"><button class="btn primary" type="button" data-db-action="resume">Check my match</button>' +
+      '<button class="btn ghost" type="button" data-db-action="new">Start a new form</button></div>' +
+      (state.dbError?'<p class="callout warn" role="alert">'+esc(state.dbError)+'</p>':'');
+    bind();
+  }
+
+  function renderDatabaseResult(){
+    var d=state.dbStatus||{}, p=d.other_profile, html='';
+    document.getElementById('steps').textContent='';
+    document.getElementById('bar').style.width='100%';
+    if(!d.status){
+      html='<h1>Your return link is unavailable.</h1><p class="lead">It may have expired after 12 hours, or the browser no longer has a valid private token. You can start again.</p>';
+    } else if(d.status==='confirmed'){
+      html='<h1>Your match is confirmed.</h1><p class="lead">You and the other person have both independently accepted.</p>';
+    } else if(d.status==='declined'){
+      html='<h1>This match was declined.</h1><p class="lead">No meeting has been arranged. You can start a new form.</p>';
+    } else if(d.status==='waiting'){
+      html='<h1>Your details are saved.</h1><p class="lead">There is no compatible participant yet. If someone registers later, use this same browser to check again.</p>';
+    } else {
+      html='<h1>A possible match is ready.</h1><p class="lead">Please review the summary. Nothing is confirmed until both people accept separately.</p>';
+    }
+    if(p){
+      html+='<div class="callout"><p><strong>'+esc(p.name||'Puente participant')+'</strong> · '+esc(p.home||'District not shared')+'</p>' +
+        '<p>Interests: '+esc((p.interests||[]).join(', ')||'Not specified')+'</p>' +
+        '<p>Availability: '+esc((p.days||[]).join(', '))+' · '+esc(p.time||'')+'</p>' +
+        '<p>Meeting length: '+esc((p.length||[]).join(', '))+'</p></div>';
+    }
+    if(d.status==='proposed'){
+      html+='<div class="card"><p>Your response: <strong>'+(d.your_consent?'Accepted':'Not yet accepted')+'</strong></p>' +
+        '<p>Other person: <strong>'+(d.other_consent?'Accepted':'Not yet accepted')+'</strong></p></div>';
+      if(!d.your_consent){
+        html+='<div class="foot"><button class="btn primary" type="button" data-db-action="accept">I accept this match</button>' +
+          '<button class="btn ghost" type="button" data-db-action="decline">I do not accept</button></div>';
+      } else {
+        html+='<p class="lead">Your acceptance is saved. The match will only be confirmed if the other person also accepts.</p>';
+      }
+    } else if(d.status==='confirmed'){
+      html+='<div class="callout"><p>Both people accepted independently. Coordinate the meeting through the agreed project contact; this prototype does not arrange transport or supervise meetings.</p></div>';
+    } else if(d.status==='waiting'){
+      html+='<div class="foot"><button class="btn primary" type="button" data-db-action="refresh">Check again</button>' +
+        '<button class="btn ghost" type="button" data-db-action="new">Start a new form</button></div>';
+    } else if(d.status==='declined' || !d.status){
+      html+='<div class="foot"><button class="btn primary" type="button" data-db-action="new">Start a new form</button></div>';
+    }
+    if(state.dbError) html+='<p class="callout warn" role="alert">'+esc(state.dbError)+'</p>';
+    view.innerHTML=html;
+    bind();
+  }
+
+  function refreshDatabaseStatus(){
+    state.dbBusy=true; state.dbError=''; renderDatabaseResult();
+    return window.PuenteDB.status().then(function(d){
+      state.dbStatus=d; state.dbBusy=false; renderDatabaseResult();
+    }).catch(function(e){
+      state.dbBusy=false; state.dbError=e.message||'Could not check your saved match.'; renderDatabaseResult();
+    });
+  }
+
+  function submitToDatabase(){
+    if(!window.PuenteDB || !window.PuenteDB.enabled){
+      state.dbError='The website deployment is not configured with its Supabase URL and public key. Please contact the project administrator.';
+      renderReview(); return;
+    }
+    state.dbBusy=true; state.dbError=''; renderReview();
+    window.PuenteDB.register(role(),dbAnswers()).then(function(result){
+      state.db=result;
+      return window.PuenteDB.status();
+    }).then(function(status){
+      state.dbStatus=status; state.dbBusy=false; state.i=active().length-1; render();
+    }).catch(function(e){
+      state.dbBusy=false; state.dbError=e.message||'Your answers could not be saved. Please try again.';
+      if(state.db){
+        state.resumePrompt=true; state.i=0; renderResume();
+      } else {
+        renderReview();
+      }
+    });
+  }
+
+  function handleDatabaseAction(action){
+    state.dbError='';
+    if(action==='new'){
+      state.resumePrompt=false; state.db=null; state.dbStatus=null;
+      state.i=0; state.a={}; render(); return;
+    }
+    if(action==='resume'){
+      state.resumePrompt=false; return refreshDatabaseStatus();
+    }
+    if(action==='refresh') return refreshDatabaseStatus();
+    if(action==='accept' || action==='decline'){
+      state.dbBusy=true; renderDatabaseResult();
+      return window.PuenteDB.respond(action==='accept').then(function(d){
+        if(action==='accept') return window.PuenteDB.status();
+        return d;
+      }).then(function(d){
+        state.dbStatus=d; state.dbBusy=false; renderDatabaseResult();
+      }).catch(function(e){
+        state.dbBusy=false; state.dbError=e.message||'Your response could not be saved.';
+        renderDatabaseResult();
+      });
+    }
+  }
+
   function renderResult(){
+    if(state.dbStatus){ return renderDatabaseResult(); }
     var m = findMatch(), me = get('name') || 'You', html = '';
     if(m.blocked){
       var why;
@@ -1951,7 +2090,10 @@
         state.heard = null; state.voiceError = ''; render();
       });
     });
-    view.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click', function(){ go(1); }); });
+    view.querySelectorAll('[data-next]').forEach(function(b){ b.addEventListener('click', function(){
+      if(step() && step().kind==='review'){ submitToDatabase(); } else { go(1); }
+    }); });
+    view.querySelectorAll('[data-db-action]').forEach(function(b){ b.addEventListener('click', function(){ handleDatabaseAction(b.getAttribute('data-db-action')); }); });
     view.querySelectorAll('[data-back]').forEach(function(b){ b.addEventListener('click', function(){ go(-1); }); });
     view.querySelectorAll('[data-edit]').forEach(function(b){
       b.addEventListener('click', function(){
