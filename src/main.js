@@ -321,7 +321,7 @@
   }
   var AREA_TO_DISTRICT = {'San Blas':'San Blas-Canillejas','Pinto':'Outside Madrid'};
   function profileHome(v){
-    return AREA_TO_DISTRICT[v.area] || (cellByName(v.area)?v.area:districtOf(v));
+    return AREA_TO_DISTRICT[v.area] || (cellByName(v.area)?v.area:nearestArea(v));
   }
   function reachable(pt,radius,home){
     var p=distXY(pt),out=home?[home]:[];
