@@ -321,7 +321,7 @@
   }
   var AREA_TO_DISTRICT = {'San Blas':'San Blas-Canillejas','Pinto':'Outside Madrid'};
   function profileHome(v){
-    return AREA_TO_DISTRICT[v.area] || (cellByName(v.area)?v.area:nearestArea(v));
+    return v.district || AREA_TO_DISTRICT[v.area] || (cellByName(v.area)?v.area:nearestArea(v));
   }
   function reachable(pt,radius,home){
     var p=distXY(pt),out=home?[home]:[];
@@ -413,31 +413,666 @@
     V('Pilar M.',68,'Villa de Vallecas',40.3700,-3.6200,2,['Mon','Thu'],['Morning'],L60,['Gardening','Cooking','Markets'],'Retired. One bus an hour into the centre.')
   ];
   var PATIENTS = [
-    { name:'Carmen',age:71,area:'Chamberí',lat:40.4305,lon:-3.7010,r:2,days:['Tue','Thu'],times:['Morning'],lens:L45,
-      interests:['Coffee','Reading','Just talking'],note:'Stroke two years ago. Understands everything; speaks in short phrases.',
-      helps:['Give me time to answer','Speak slowly to me'] },
-    { name:'Joaquín',age:80,area:'Chamberí',lat:40.4330,lon:-3.7040,r:0.3,days:['Mon','Wed','Fri'],times:['Morning'],lens:L60,
-      interests:['Football','Just talking','Coffee'],note:'Stopped driving last year. Does not go beyond his own street.',
-      helps:['Give me time to answer','Do not finish my sentences'] },
-    { name:'Mercedes',age:76,area:'Hortaleza',lat:40.4690,lon:-3.6440,r:2,days:['Tue','Wed','Thu'],times:['Morning'],lens:L45,
-      interests:['Markets','Cooking','Just talking'],note:'Hearing loss as well as aphasia. Prefers quiet places.',
-      helps:['Speak slowly to me','Give me time to answer'] },
-    { name:'Pilar',age:66,area:'Arganzuela',lat:40.3995,lon:-3.6985,r:2,days:['Sat','Sun'],times:['Afternoon'],lens:L45,
-      interests:['Walking','Animals','Markets'],note:'Walks with a stick.',
-      helps:['Show me pictures','Speak slowly to me'] },
-    { name:'Vicente',age:69,area:'Latina',lat:40.3995,lon:-3.7410,r:15,days:['Tue','Thu','Fri'],times:['Evening'],lens:L45,
-      interests:['Music','Cinema','Just talking'],note:'Lives alone. Dislikes the telephone.',
-      helps:['Write key words down for me','Give me time to answer'] },
-    { name:'Tomás',age:74,area:'Carabanchel',lat:40.3905,lon:-3.7440,r:0,days:['Mon','Wed','Fri'],times:['Morning'],lens:L30,
-      interests:['Football','Cards and dominoes','Coffee'],note:'Severe aphasia. Cannot go out alone, so a visit has to come to him.',
-      helps:['Show me pictures'] },
-    { name:'Nuria',age:42,area:'Chamberí',lat:40.4280,lon:-3.7030,r:15,days:['Mon','Tue','Thu'],times:['Evening'],lens:L60,
-      interests:['Walking','Music','Reading'],note:'Young survivor. Works part time.',
-      helps:['Give me time to answer'] },
-    { name:'Rosa',age:73,area:'Ciudad Lineal',lat:40.4680,lon:-3.6420,r:2,days:['Mon','Wed'],times:['Afternoon'],lens:L45,
-      interests:['Reading','Church','Just talking'],note:'Lives at the north end of Ciudad Lineal. Low mood since the stroke.',
-      helps:['Give me time to answer'] }
-  ];
+  {
+    "id": "S01",
+    "name": "Elena",
+    "age": 68,
+    "area": "Chamberí",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cooking",
+      "Cinema",
+      "Reading"
+    ],
+    "note": "ID: S01. Months since stroke: 14. Aphasia severity: Mild. Communication: Speaks in short sentences; finds words slowly but gets there. Mobility: Walks independently. Fatigue/time: Mornings best; tired after 16:00. Transport: Metro and bus, independent. Area: Chamberí. District: Chamberí. Area connectivity: Well connected. Interests: Reading, cinema, cooking. Availability: Mon–Fri mornings. Languages: Spanish. Support person: Husband, retired, available. Device and digital skills: Smartphone, confident. Hard case tested: Baseline — easy case, should match without difficulty. Notes: Control profile: if the system fails here, something is badly wrong. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S02",
+    "name": "Tomás",
+    "age": 74,
+    "area": "Carabanchel",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Wed",
+      "Fri"
+    ],
+    "times": [
+      "Morning",
+      "Afternoon"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Football",
+      "Cards and dominoes",
+      "Animals"
+    ],
+    "note": "ID: S02. Months since stroke: 8. Aphasia severity: Severe. Communication: Yes/no answers only; points at pictures; cannot read long text. Mobility: Walks with a stick. Fatigue/time: Mornings only; sleeps after lunch. Transport: Bus only, needs a seat. Area: Carabanchel. District: Carabanchel. Area connectivity: Reasonably connected. Interests: Football, dominoes, dogs. Availability: Mon/Wed/Fri 10:00–12:00. Languages: Spanish. Support person: Daughter, visits twice a week. Device and digital skills: Smartphone used by daughter, not by him. Hard case tested: Severe aphasia — intake must work with yes/no and pictures only. Notes: Cannot complete any free-text or open-question flow. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Show me pictures",
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S03",
+    "name": "Carmen",
+    "age": 71,
+    "area": "Usera",
+    "lat": 0,
+    "lon": 0,
+    "r": 0,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Gardening",
+      "Music"
+    ],
+    "note": "ID: S03. Months since stroke: 22. Aphasia severity: Moderate. Communication: Understands well; speaks in single words; writes better than she speaks. Mobility: Walks slowly, tires fast. Fatigue/time: Late morning, 10:00–12:30. Transport: None — cannot use public transport alone, cannot afford taxis. Area: Usera. District: Usera. Area connectivity: Reasonably connected. Interests: Knitting, radio, plants. Availability: Weekday mornings. Languages: Spanish. Support person: None nearby; son lives in Valencia. Device and digital skills: Basic phone, no smartphone. Hard case tested: No transport at all — match must be walking distance or it is impossible. Notes: Tests whether the system refuses rather than proposes something unreachable. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S04",
+    "name": "Rafael",
+    "age": 66,
+    "area": "Villa de Vallecas",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Tue",
+      "Thu"
+    ],
+    "times": [
+      "Afternoon"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Reading",
+      "Walking"
+    ],
+    "note": "ID: S04. Months since stroke: 11. Aphasia severity: Mild. Communication: Speaks fluently but loses the thread; needs time. Mobility: Walks independently. Fatigue/time: Afternoons; slow to wake. Transport: One bus per hour; nearest metro 40 min away. Area: Villa de Vallecas (outer edge). District: Villa de Vallecas. Area connectivity: Poorly connected. Interests: Chess, history, walking. Availability: Tue/Thu afternoons. Languages: Spanish. Support person: Wife, works full time. Device and digital skills: Smartphone, confident. Hard case tested: Poorly connected area — travel time must be checked honestly. Notes: Most volunteers will be too far; tests the hard travel-time constraint. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S05",
+    "name": "Pilar",
+    "age": 79,
+    "area": "Moratalaz",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cards and dominoes",
+      "Music",
+      "Church"
+    ],
+    "note": "ID: S05. Months since stroke: 30. Aphasia severity: Moderate. Communication: Short phrases; gets frustrated when interrupted. Mobility: Walker indoors, wheelchair outdoors. Fatigue/time: Mid-morning only. Transport: Partner drives, but he is exhausted. Area: Moratalaz. District: Moratalaz. Area connectivity: Reasonably connected. Interests: Zarzuela, card games, church. Availability: Weekday mornings. Languages: Spanish. Support person: Husband, 81, carer burnout — needs respite himself. Device and digital skills: Tablet, used with help. Hard case tested: Exhausted partner — the carer is a second user in need, not a resource. Notes: Should not assume the partner can organise or accompany everything. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S06",
+    "name": "Jorge",
+    "age": 58,
+    "area": "Tetuán",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "times": [
+      "Morning",
+      "Afternoon",
+      "Evening"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Coffee",
+      "Music"
+    ],
+    "note": "ID: S06. Months since stroke: 6. Aphasia severity: None. Communication: Speaks normally. Mobility: Wheelchair, needs step-free access. Fatigue/time: Any time; fatigue not a main issue. Transport: Accessible taxi; expensive, limits frequency. Area: Tetuán. District: Tetuán. Area connectivity: Well connected. Interests: Photography, jazz, bars. Availability: Most evenings. Languages: Spanish, English. Support person: Brother, nearby, flexible. Device and digital skills: Smartphone, very confident. Hard case tested: Wheelchair — the venue itself must be step-free, not only the route. Notes: Tests whether the proposal checks the place, not just the distance. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S07",
+    "name": "Dolores",
+    "age": 83,
+    "area": "Villaverde",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cinema",
+      "Just talking"
+    ],
+    "note": "ID: S07. Months since stroke: 19. Aphasia severity: Moderate. Communication: Slow speech; understands better face to face than by phone. Mobility: Walks with a stick. Fatigue/time: Mornings; naps 14:00–16:00. Transport: Bus, with company only. Area: Villaverde. District: Villaverde. Area connectivity: Reasonably connected. Interests: Sewing, neighbours, television. Availability: Mon–Fri mornings. Languages: Spanish. Support person: Neighbour helps with errands. Device and digital skills: Landline only; no smartphone, no email. Hard case tested: No smartphone — cannot use the tool at all without a go-between. Notes: Tests the exclusion limitation stated in our risk section. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S08",
+    "name": "Andrés",
+    "age": 70,
+    "area": "Arganzuela",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Animals",
+      "Coffee"
+    ],
+    "note": "ID: S08. Months since stroke: 9. Aphasia severity: Moderate. Communication: Speaks in short bursts; tires quickly mid-conversation. Mobility: Walks independently. Fatigue/time: Only 10:00–11:30; unusable the rest of the day. Transport: Metro, independent. Area: Arganzuela. District: Arganzuela. Area connectivity: Well connected. Interests: Birdwatching, parks, coffee. Availability: Daily, but only 10:00–11:30. Languages: Spanish. Support person: Daughter by phone, not in person. Device and digital skills: Smartphone, basic use. Hard case tested: Very narrow fatigue window — scheduling must respect 90 minutes a day. Notes: Tests whether availability matching is real or cosmetic. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S09",
+    "name": "Mercedes",
+    "age": 76,
+    "area": "Hortaleza",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Tue",
+      "Wed",
+      "Thu"
+    ],
+    "times": [
+      "Morning",
+      "Afternoon"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cooking",
+      "Cinema",
+      "Just talking"
+    ],
+    "note": "ID: S09. Months since stroke: 25. Aphasia severity: Moderate. Communication: Needs the speaker to face her; significant hearing loss as well. Mobility: Walks slowly. Fatigue/time: Mornings and early afternoon. Transport: Bus and metro, with company. Area: Hortaleza. District: Hortaleza. Area connectivity: Reasonably connected. Interests: Museums, pastry, grandchildren. Availability: Tue/Wed/Thu. Languages: Spanish. Support person: Son, weekends only. Device and digital skills: Smartphone used with son's help. Hard case tested: Aphasia plus hearing loss — a noisy café would make the meeting fail. Notes: Tests whether the proposed setting fits the sensory profile. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S10",
+    "name": "Nuria",
+    "age": 42,
+    "area": "Lavapiés",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Evening"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Walking",
+      "Music"
+    ],
+    "note": "ID: S10. Months since stroke: 4. Aphasia severity: Mild. Communication: Speaks well; occasional word-finding pauses; self-conscious about it. Mobility: Walks independently; mild right-hand weakness. Fatigue/time: Evenings; works part time. Transport: Metro, independent. Area: Lavapiés. District: Centro. Area connectivity: Well connected. Interests: Climbing, concerts, languages. Availability: Weekday evenings, weekends. Languages: Spanish, English, French. Support person: Partner, supportive. Device and digital skills: Smartphone, very confident. Hard case tested: Young survivor — most volunteers and activities skew elderly. Notes: Tests whether matching assumes an old-age profile by default. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S11",
+    "name": "Vicente",
+    "age": 69,
+    "area": "Ciudad Lineal",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "times": [
+      "Afternoon"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Music"
+    ],
+    "note": "ID: S11. Months since stroke: 16. Aphasia severity: Moderate. Communication: Short sentences; long pauses; dislikes the telephone. Mobility: Walks independently. Fatigue/time: Afternoons. Transport: Metro, independent. Area: Ciudad Lineal. District: Ciudad Lineal. Area connectivity: Well connected. Interests: Fishing, radio, carpentry. Availability: Most afternoons. Languages: Spanish. Support person: None — lives alone, no family in Madrid. Device and digital skills: Smartphone, basic use. Hard case tested: Lives completely alone — no one can help with intake or confirm anything. Notes: Tests whether the flow works without any support person. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S12",
+    "name": "Ion",
+    "age": 64,
+    "area": "Aluche",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Football",
+      "Cards and dominoes"
+    ],
+    "note": "ID: S12. Months since stroke: 13. Aphasia severity: Moderate. Communication: Limited Spanish before the stroke; aphasia now affects both languages. Mobility: Walks with a stick. Fatigue/time: Mornings. Transport: Bus only. Area: Aluche. District: Latina. Area connectivity: Reasonably connected. Interests: Football, fishing, cards. Availability: Mon–Sat mornings. Languages: Romanian (first language), basic Spanish. Support person: Wife, limited Spanish too. Device and digital skills: Smartphone, basic use. Hard case tested: Language barrier on top of aphasia — which language should intake use?. Notes: Tests an assumption the design has not yet addressed. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S13",
+    "name": "Rosa",
+    "age": 73,
+    "area": "Latina",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "times": [
+      "Morning",
+      "Afternoon",
+      "Evening"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [],
+    "note": "ID: S13. Months since stroke: 20. Aphasia severity: Mild. Communication: Speaks adequately; says very little; low mood. Mobility: Walks independently. Fatigue/time: No good time; sleeps badly. Transport: Metro, independent. Area: Latina. District: Latina. Area connectivity: Well connected. Interests: Used to paint; no current interests named. Availability: Says any time, then cancels. Languages: Spanish. Support person: Sister, phones weekly. Device and digital skills: Smartphone, basic use. Hard case tested: Signs of depression and withdrawal — triggers the distress rule. Notes: Tests that the system stops the normal flow and refers, instead of matching. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S14",
+    "name": "Manuel",
+    "age": 67,
+    "area": "San Blas",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cooking",
+      "Reading",
+      "Walking"
+    ],
+    "note": "ID: S14. Months since stroke: 10. Aphasia severity: Mild. Communication: Speaks clearly; cannot write or type with the right hand. Mobility: Right-sided weakness; walks with a stick. Fatigue/time: Mornings. Transport: Metro, independent. Area: San Blas. District: San Blas-Canillejas. Area connectivity: Reasonably connected. Interests: Cycling (before), news, cooking. Availability: Weekday mornings. Languages: Spanish. Support person: Son, evenings only. Device and digital skills: Smartphone, one-handed, slow. Hard case tested: Motor impairment — every extra tap costs real effort. Notes: Tests whether the intake is short enough, not only simple enough. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S15",
+    "name": "Begoña",
+    "age": 77,
+    "area": "Pinto",
+    "lat": 40.242,
+    "lon": -3.6985,
+    "r": 2,
+    "days": [
+      "Tue",
+      "Thu"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Animals",
+      "Gardening",
+      "Church"
+    ],
+    "note": "ID: S15. Months since stroke: 28. Aphasia severity: Severe. Communication: Almost no speech; nods and shakes head; uses a communication book. Mobility: Walks with a walker. Fatigue/time: Mornings only. Transport: One bus per hour into the village centre. Area: Pinto (outskirts). District: Outside Madrid. Area connectivity: Poorly connected. Interests: Gardening, church, cats. Availability: Tue and Thu mornings. Languages: Spanish. Support person: Daughter, drives over at weekends. Device and digital skills: No device of her own; daughter's phone. Hard case tested: Severe aphasia plus isolation plus poor transport — worst case combined. Notes: The profile most likely to produce no feasible match at all. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Show me pictures",
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S16",
+    "name": "Luis",
+    "age": 72,
+    "area": "Chamartín",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "times": [
+      "Morning",
+      "Afternoon",
+      "Evening"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cards and dominoes",
+      "Reading",
+      "Coffee",
+      "Walking"
+    ],
+    "note": "ID: S16. Months since stroke: 15. Aphasia severity: Mild. Communication: Speaks well; slight slowness. Mobility: Walks independently. Fatigue/time: Any time. Transport: Metro and bus, independent. Area: Chamartín. District: Chamartín. Area connectivity: Well connected. Interests: Walking, cards, history, bars. Availability: Almost any day. Languages: Spanish. Support person: Wife, active and available. Device and digital skills: Smartphone, confident. Hard case tested: Second easy case — wide availability, central, no barriers. Notes: Should produce several good matches; useful to compare against S15. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S17",
+    "name": "Antonia",
+    "age": 75,
+    "area": "Puente de Vallecas",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cooking",
+      "Music",
+      "Just talking"
+    ],
+    "note": "ID: S17. Months since stroke: 18. Aphasia severity: Moderate. Communication: Short phrases; misses things on her left side, including on a screen. Mobility: Walks slowly. Fatigue/time: Late morning. Transport: Bus, with company. Area: Puente de Vallecas. District: Puente de Vallecas. Area connectivity: Reasonably connected. Interests: Radio theatre, baking, neighbours. Availability: Weekday late mornings. Languages: Spanish. Support person: Niece, twice a week. Device and digital skills: Tablet, used with help. Hard case tested: Left-sided visual field loss — icons on the left may never be seen. Notes: Tests the icon layout, not only the icon choice. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S18",
+    "name": "Fernando",
+    "age": 70,
+    "area": "Retiro",
+    "lat": 0,
+    "lon": 0,
+    "r": 15,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Afternoon"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cinema",
+      "Walking",
+      "Just talking"
+    ],
+    "note": "ID: S18. Months since stroke: 12. Aphasia severity: Moderate. Communication: Understands everything; refuses to be treated as incapable. Mobility: Walks independently. Fatigue/time: Afternoons. Transport: Metro, independent. Area: Retiro. District: Retiro. Area connectivity: Well connected. Interests: Cinema, politics, cycling. Availability: Weekday afternoons. Languages: Spanish. Support person: Wife, available. Device and digital skills: Smartphone, confident. Hard case tested: Resists being helped — wording that sounds charitable will make him quit. Notes: Tests the tone of the invitation, which no constraint check will catch. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S19",
+    "name": "Isabel",
+    "age": 65,
+    "area": "Barajas",
+    "lat": 0,
+    "lon": 0,
+    "r": 2,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Evening"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Cooking",
+      "Cinema",
+      "Walking"
+    ],
+    "note": "ID: S19. Months since stroke: 7. Aphasia severity: Mild. Communication: Speaks well; tires when the conversation is long. Mobility: Walks independently. Fatigue/time: Evenings. Transport: Partner drives, evenings and weekends only. Area: Barajas. District: Barajas. Area connectivity: Reasonably connected. Interests: Swimming, cinema, cooking. Availability: Weekday evenings, weekends. Languages: Spanish. Support person: Partner, works 09:00–18:00. Device and digital skills: Smartphone, confident. Hard case tested: Availability depends entirely on someone else's working hours. Notes: Tests whether the system models the support person's schedule too. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  },
+  {
+    "id": "S20",
+    "name": "Joaquín",
+    "age": 80,
+    "area": "Villaverde Alto",
+    "lat": 0,
+    "lon": 0,
+    "r": 0,
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "times": [
+      "Morning"
+    ],
+    "lens": [
+      "30 minutes",
+      "45 minutes",
+      "One hour or more"
+    ],
+    "interests": [
+      "Football",
+      "Coffee",
+      "Music"
+    ],
+    "note": "ID: S20. Months since stroke: 24. Aphasia severity: Moderate. Communication: Short sentences; long pauses; gives up if rushed. Mobility: Walks with a stick. Fatigue/time: Mornings. Transport: None since his licence was withdrawn. Area: Villaverde Alto. District: Villaverde. Area connectivity: Poorly connected. Interests: Football, bar with friends, radio. Availability: Weekday mornings. Languages: Spanish. Support person: Wife, 78, increasingly isolated herself. Device and digital skills: No smartphone; wife has one. Hard case tested: Loss of driving plus an isolated spouse — the case from our source. Notes: Both people need support, not only the survivor. Meeting length: not specified in the source spreadsheet",
+    "helps": [
+      "Give me time to answer"
+    ]
+  }
+];
   var AREA = 'Chamberí';
 
   /* interests: all fourteen are shown from the start, so showAll begins open */
