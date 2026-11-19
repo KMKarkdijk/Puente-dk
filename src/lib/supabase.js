@@ -1,26 +1,55 @@
-/* Minimal Supabase REST client, no dependencies. Uses ONLY the public anon key from
-   config.js. Nothing in the app calls it yet; it is ready for when the app needs a database.
-   Example: PuenteDB.insert('requests', { answers: {...} }) */
+/* Minimal Supabase RPC client. Only the public publishable/anon key belongs here.
+   Participant tokens are private bearer credentials and stay in this browser. */
 (function () {
   var cfg = window.__PUENTE_CONFIG__ || {};
   var enabled = !!(cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY);
-  function call(method, path, body, extra) {
-    if (!enabled) return Promise.reject(new Error('Supabase is not configured'));
-    var headers = Object.assign({
-      apikey: cfg.SUPABASE_ANON_KEY,
-      Authorization: 'Bearer ' + cfg.SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json'
-    }, extra || {});
-    return fetch(cfg.SUPABASE_URL + '/rest/v1/' + path, {
-      method: method, headers: headers, body: body ? JSON.stringify(body) : undefined
+  var TOKEN_KEY = 'puente.participant.token.v1';
+
+  function rpc(name, args) {
+    if (!enabled) return Promise.reject(new Error('Supabase is not configured for this deployment.'));
+    return fetch(cfg.SUPABASE_URL + '/rest/v1/rpc/' + encodeURIComponent(name), {
+      method: 'POST',
+      headers: {
+        apikey: cfg.SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + cfg.SUPABASE_ANON_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(args || {})
     }).then(function (r) {
-      if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
-      return r.status === 204 ? null : r.json();
+      if (!r.ok) return r.text().then(function (t) {
+        var message = t;
+        try { var j = JSON.parse(t); message = j.message || j.details || t; } catch (e) {}
+        throw new Error(message);
+      });
+      return r.json();
     });
   }
+
   window.PuenteDB = {
     enabled: enabled,
-    select: function (table, query) { return call('GET', table + (query ? '?' + query : '')); },
-    insert: function (table, row) { return call('POST', table, row, { Prefer: 'return=minimal' }); }
+    register: function (role, answers) {
+      return rpc('puente_register', { p_role: role, p_answers: answers }).then(function (data) {
+        if (!data || !data.participant_token) throw new Error('The database did not return a private return token.');
+        try { window.localStorage.setItem(TOKEN_KEY, data.participant_token); }
+        catch (e) { throw new Error('This browser cannot safely save your private return token. Enable local storage and try again.'); }
+        return data;
+      });
+    },
+    respond: function (accept) {
+      var token = this.getToken();
+      if (!token) return Promise.reject(new Error('No saved Puente return token was found in this browser.'));
+      return rpc('puente_respond', { p_token: token, p_accept: !!accept });
+    },
+    status: function () {
+      var token = this.getToken();
+      if (!token) return Promise.reject(new Error('No saved Puente return token was found in this browser.'));
+      return rpc('puente_status', { p_token: token });
+    },
+    getToken: function () {
+      try { return window.localStorage.getItem(TOKEN_KEY); } catch (e) { return null; }
+    },
+    clearToken: function () {
+      try { window.localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+    }
   };
 })();
