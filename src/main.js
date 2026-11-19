@@ -1226,11 +1226,11 @@
           'interests':'People live close enough and are free when you are, but nobody wants to do the same thing as you.'
         }[m.blocked];
       }
-      state.pageSay = 'No match yet. ' + why + ' A person at the partner organisation will look for someone who can come to you, or for a group nearby. Nothing is arranged without your yes.';
+      state.pageSay = 'No match yet. ' + why + ' This prototype does not send your answers to an organisation or contact another person.';
       html += '<h1>No match yet.</h1>' + listenBtn('page') +
         '<div class="callout"><h2>Why</h2><p>'+esc(why)+'</p></div>' +
-        '<div class="card"><h2>What happens now</h2><p>A person at the partner organisation will look for someone who can come to you, or for a group nearby. They will contact you.</p>' +
-        '<p>Nothing is arranged without your yes.</p></div>' +
+        '<div class="card"><h2>What happens now</h2><p>This prototype has no live database and does not send your answers to an organisation. In a real service, a partner organisation would need to review the request and contact people separately.</p>' +
+        '<p>Nothing is arranged without agreement from both people.</p></div>' +
         '<div class="foot"><button class="btn ghost" type="button" data-back="1">'+ico('back',22)+'</button>' +
         '<button class="btn primary" type="button" data-restart="1">Start again</button></div>';
       view.innerHTML = html; bind(); return;
