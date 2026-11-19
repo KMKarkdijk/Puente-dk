@@ -9,7 +9,12 @@ cpSync('index.html', `${out}/index.html`);
 cpSync('src', `${out}/src`, { recursive: true });
 
 const url = (process.env.SUPABASE_URL || '').trim();
-const key = (process.env.SUPABASE_ANON_KEY || '').trim();
+const key = (process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+
+if (process.env.VERCEL === '1' && (!url || !key)) {
+  console.error('ERROR: Set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in Vercel before deploying.');
+  process.exit(1);
+}
 
 // Safety net: refuse to publish a secret key in frontend code.
 let secret = key.startsWith('sb_secret_');
