@@ -68,4 +68,4 @@ For a local Supabase-connected build, set `SUPABASE_URL` and `SUPABASE_PUBLISHAB
 
 ## Vercel deployment
 
-Vercel is not connected through an available deployment control in this workspace. The branch is prepared for a Preview build once the two environment variables above are set in Vercel. Verify the Preview workflow with two separate browser profiles before promoting to Production. Do not deploy as a real service for patients or volunteers.
+GitHub reports a Vercel Preview check for this repository, so the repository appears linked to Vercel. The current Preview check is failing. The build script now deliberately fails a Vercel build when the Supabase public environment variables are missing; add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` for Preview and Production, then redeploy. Vercel deployment controls/logs are not available through this workspace, so the Preview must be retriggered and checked in the Vercel dashboard. Verify the Preview workflow with two separate browser profiles before promoting to Production. Do not deploy as a real service for patients or volunteers.
