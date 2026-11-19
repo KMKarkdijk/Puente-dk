@@ -1,27 +1,30 @@
-create or replace function public.puente_match_compatible(a jsonb, b jsonb)
+create or replace function public.puente_match_compatible(a jsonb,b jsonb)
 returns boolean language sql immutable set search_path='' as $$
  select
   coalesce(exists(select 1 from jsonb_array_elements_text(coalesce(a->'days','[]'::jsonb)) ad
-    join jsonb_array_elements_text(coalesce(b->'days','[]'::jsonb)) bd on ad.value=bd.value),false)
-  and coalesce(a->>'time'=b->>'time',false)
+   join jsonb_array_elements_text(coalesce(b->'days','[]'::jsonb)) bd on ad.value=bd.value),false)
+  and coalesce(a->>'time'=b->>'time' or exists(select 1
+   from jsonb_array_elements_text(coalesce(a->'times',case when a ? 'time' then jsonb_build_array(a->>'time') else '[]'::jsonb end)) atime
+   join jsonb_array_elements_text(coalesce(b->'times',case when b ? 'time' then jsonb_build_array(b->>'time') else '[]'::jsonb end)) btime on atime.value=btime.value),false)
   and coalesce(exists(select 1 from jsonb_array_elements_text(coalesce(a->'interests','[]'::jsonb)) ai
-    join jsonb_array_elements_text(coalesce(b->'interests','[]'::jsonb)) bi on ai.value=bi.value),false)
-  and coalesce(exists(select 1 from jsonb_array_elements_text(coalesce(a->'length','[]'::jsonb)) al
-    join jsonb_array_elements_text(coalesce(b->'length','[]'::jsonb)) bl on al.value=bl.value),false)
+   join jsonb_array_elements_text(coalesce(b->'interests','[]'::jsonb)) bi on ai.value=bi.value),false)
+  and coalesce(exists(select 1 from jsonb_array_elements_text(coalesce(a->'length',coalesce(a->'lens','[]'::jsonb))) al
+   join jsonb_array_elements_text(coalesce(b->'length',coalesce(b->'lens','[]'::jsonb))) bl on al.value=bl.value),false)
   and (coalesce(a->>'home','')=coalesce(b->>'home','')
-    or coalesce(a->'cango','[]'::jsonb) ? coalesce(b->>'home','')
-    or coalesce(b->'cango','[]'::jsonb) ? coalesce(a->>'home','')
-    or exists(select 1 from jsonb_array_elements_text(coalesce(a->'cango','[]'::jsonb)) aa
-      join jsonb_array_elements_text(coalesce(b->'cango','[]'::jsonb)) bb on aa.value=bb.value))
+   or coalesce(a->'cango','[]'::jsonb) ? coalesce(b->>'home','')
+   or coalesce(b->'cango','[]'::jsonb) ? coalesce(a->>'home','')
+   or exists(select 1 from jsonb_array_elements_text(coalesce(a->'cango','[]'::jsonb)) aa
+    join jsonb_array_elements_text(coalesce(b->'cango','[]'::jsonb)) bb on aa.value=bb.value))
   and nullif(a->>'lat','') is not null and nullif(a->>'lon','') is not null
   and nullif(b->>'lat','') is not null and nullif(b->>'lon','') is not null
   and 6371*2*asin(least(1::double precision,sqrt(
-    power(sin(radians(((b->>'lat')::double precision-(a->>'lat')::double precision)/2)),2)
-    +cos(radians((a->>'lat')::double precision))*cos(radians((b->>'lat')::double precision))
-    *power(sin(radians(((b->>'lon')::double precision-(a->>'lon')::double precision)/2)),2)
+   power(sin(radians(((b->>'lat')::double precision-(a->>'lat')::double precision)/2)),2)
+   +cos(radians((a->>'lat')::double precision))*cos(radians((b->>'lat')::double precision))
+   *power(sin(radians(((b->>'lon')::double precision-(a->>'lon')::double precision)/2)),2)
   ))) <= greatest(0,coalesce(nullif(a->>'radius_km','')::double precision,0))
-       + greatest(0,coalesce(nullif(b->>'radius_km','')::double precision,0));
+    + greatest(0,coalesce(nullif(b->>'radius_km','')::double precision,0));
 $$;
+revoke all on function public.puente_match_compatible(jsonb,jsonb) from public,anon,authenticated;
 
 create or replace function public.puente_status(p_token text)
 returns jsonb language plpgsql security definer set search_path='' as $$
