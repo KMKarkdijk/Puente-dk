@@ -2,63 +2,61 @@
 
 Picture-first questionnaire (modes W = Writing, P = Pictures, V = Voice). Static website, vanilla JavaScript.
 
-## What it is
+## Current state of the two-sided matching work
+
+The branch `feature/supabase-two-sided-matching` contains the initial Supabase database layer:
+- Separate participant records for care recipients and volunteers.
+- Private participant tokens (only token hashes are stored).
+- Match proposals with separate consent flags; a match is confirmed only after both participants accept.
+- A database cleanup job scheduled every minute; expired participant, token and match rows are deleted.
+- Row Level Security enabled and forced on all three tables; direct table access is revoked.
+- One active match per participant is enforced.
+
+**Important: this is a backend foundation, not a finished website integration.** The current `src/main.js` still uses its local fictitious profiles and local `findMatch()` result screen. It does not yet submit completed forms to the new RPCs, give participants their return tokens, or show an independent consent screen. Do not merge or deploy this branch as a live feature until that UI flow is implemented and tested.
+
+## Supabase migrations and tests
+
+Apply migrations in order:
+1. `supabase/migrations/202611190001_puente_core_tables.sql`
+2. `supabase/migrations/202611190002_puente_matching_consent_rpc.sql`
+3. `supabase/migrations/202611190003_puente_one_active_match_per_participant.sql`
+
+The database integration test is `supabase/tests/two_sided_matching.sql`. Run it only in a disposable test project; it creates and deletes synthetic participants.
+
+The cleanup job runs every minute. Expired data is immediately inaccessible to the RPCs after its expiry timestamp; physical deletion occurs on the next scheduled cleanup run (normally within one minute). The 60-minute lifetime is not an archival guarantee and backups/logs may have separate retention rules.
+
+## Existing site and build
+
 - **Framework / language:** none. Plain HTML, CSS and JavaScript (ES5 style), no framework, no bundler.
 - **Libraries (CDN, pinned):** Leaflet 1.9.4 (real map), Google Fonts. Map tiles: OpenStreetMap.
-- **Build:** `npm run build` copies the site into `dist/` and writes `dist/config.js`. No dependencies to install.
+- **Build:** `npm run build` copies the site into `dist/` and writes `dist/config.js`.
 
-## Files
 | File | Purpose |
 |---|---|
 | `index.html` | page shell, loads everything |
-| `src/main.js` | the whole app (questions, matching, map, results) |
-| `src/style.css` | all styling |
-| `src/lib/supabase.js` | optional database client (not used by the UI yet) |
-| `scripts/build.mjs` | build script (also blocks secret keys) |
-| `package.json`, `vercel.json` | build scripts, Vercel settings and security headers |
-| `.env.example` | variable names, no secrets |
-| `supabase/schema.sql` | proposed tables and Row Level Security |
+| `src/main.js` | questions, existing local matching and result UI |
+| `src/style.css` | styling |
+| `src/lib/supabase.js` | minimal Supabase REST client; not yet used by the UI |
+| `scripts/build.mjs` | build script; blocks secret keys in browser output |
+| `supabase/migrations/` | database migrations |
+| `supabase/tests/` | disposable test SQL |
 
 ## Run and build locally
+
 Requires Node 18+.
 ```
-npm run build      # creates dist/
-npm run dev        # builds and serves on http://localhost:3000
+npm run build
+npm run dev
 ```
 Do not open `index.html` by double-clicking after a fresh checkout: `config.js` only exists after `npm run build`.
 
-## What needs a backend
-| Feature | Today | For production |
-|---|---|---|
-| Volunteers and matching | hard-coded demo people in `main.js` | database (Supabase `volunteers`) |
-| Sending the request to a person | shown on screen only | database or email service (`requests` table, or a server function that sends mail) |
-| Accounts / login | none | Supabase Auth, if people need to return |
-| File storage | none needed | none |
-| Voice mode | browser `SpeechRecognition` / `webkitSpeechRecognition` (English, en-GB); no audio recording or storage by Puente | browser support varies; depending on the browser, audio may be processed by its speech provider; no Puente backend is used |
-| External APIs | OpenStreetMap tiles, Google Fonts | OSM's public tile server is for light use; for real traffic use a tile provider (MapTiler, Stadia, Mapbox) |
+## Security and privacy
 
-Nothing here needs a backend to run today. The site works as it is.
+- The browser may receive only `SUPABASE_URL` and a public anon/publishable key. Never put a service-role or `sb_secret_` key in frontend code.
+- The RPCs use random 256-bit participant tokens; only SHA-256 token hashes are stored. Public callable SECURITY DEFINER RPCs are intentionally used for token-based participation, but they still need abuse/rate-limit protection before public deployment.
+- Participant answers may contain health-related information. Before real use, complete a GDPR/AVG review, define lawful basis and notices, restrict collected fields, agree retention/backups/logs, and arrange human safeguarding and accessibility review.
+- The existing questionnaire's voice feature relies on browser speech recognition; audio may be processed by the browser's external speech provider.
 
-## Secrets
-- The browser only ever receives `SUPABASE_URL` and `SUPABASE_ANON_KEY` (public by design; Row Level Security protects the data).
-- The build fails if that variable holds a `service_role` or `sb_secret_` key.
-- Never put API keys for other services in `src/`. Use a Vercel serverless function (`/api/...`) and a Vercel environment variable instead.
+## Vercel
 
-## Privacy (important before using with real participants)
-Answers include a name, a home location and the fact that someone had a stroke. In the EU that is health data (GDPR, special category). Before using this prototype with real participants, complete a privacy and accessibility review and provide an appropriate privacy notice and lawful basis.
-
-Voice input uses the browser's built-in speech-recognition API. Puente itself does not record or store audio, but the browser may send audio to an external speech provider; this depends on the browser and its settings. Check the provider's terms, processing location and retention before use with real participants. The app does not save the transcript to a database. Google Fonts loaded from Google's servers is also a GDPR point; you can self-host the two font families instead.
-
-## Deploy to Vercel
-1. Create a GitHub repo and push this folder (`.gitignore` already excludes `dist`, `.env`).
-2. vercel.com > Add New > Project > import the repo.
-3. Framework Preset: **Other**. Build Command: `npm run build`. Output Directory: `dist` (`vercel.json` already says this).
-4. Only if you use Supabase: Settings > Environment Variables, add `SUPABASE_URL` and `SUPABASE_ANON_KEY` (Production and Preview). Deploy.
-5. Open the URL and test: pick a home on the map, finish the questions, check the browser console for errors.
-6. Optional: Settings > Domains to add your own domain.
-CLI alternative: `npm i -g vercel`, then `vercel` (test) and `vercel --prod`.
-
-## Supabase (optional)
-1. Create a project, run `supabase/schema.sql` in the SQL editor.
-2. Copy Project URL and the anon/publishable key into the Vercel variables above (and into a local `.env` if you export them before `npm run build`).
-3. In `main.js` call `PuenteDB.select('volunteers')` or `PuenteDB.insert('requests', {...})` where the app should use real data.
+The current production site is not changed by this branch. Do not deploy this backend-only branch until the browser form, token-return and separate-consent screens are connected and verified in a preview deployment.
