@@ -8,7 +8,7 @@ The branch `feature/supabase-two-sided-matching` contains the initial Supabase d
 - Separate participant records for care recipients and volunteers.
 - Private participant tokens (only token hashes are stored).
 - Match proposals with separate consent flags; a match is confirmed only after both participants accept.
-- A database cleanup job scheduled every minute; expired participant, token and match rows are deleted.
+- A database cleanup job scheduled every minute; expired participant, token and match rows are deleted after 12 hours.
 - Row Level Security enabled and forced on all three tables; direct table access is revoked.
 - One active match per participant is enforced.
 
@@ -21,9 +21,9 @@ Apply migrations in order:
 2. `supabase/migrations/202611190002_puente_matching_consent_rpc.sql`
 3. `supabase/migrations/202611190003_puente_one_active_match_per_participant.sql`
 
-The database integration test is `supabase/tests/two_sided_matching.sql`. Run it only in a disposable test project; it creates and deletes synthetic participants.
+The database integration tests are `supabase/tests/two_sided_matching.sql` and `supabase/tests/twenty_profile_two_sided_flow.sql`. Run them only in a disposable test project; they create and delete synthetic participants.
 
-The cleanup job runs every minute. Expired data is immediately inaccessible to the RPCs after its expiry timestamp; physical deletion occurs on the next scheduled cleanup run (normally within one minute). The 60-minute lifetime is not an archival guarantee and backups/logs may have separate retention rules.
+The cleanup job runs every minute. Expired data is immediately inaccessible to the RPCs after its expiry timestamp; physical deletion occurs on the next scheduled cleanup run (normally within one minute). The 12-hour lifetime is not an archival guarantee and backups/logs may have separate retention rules.
 
 ## Existing site and build
 
