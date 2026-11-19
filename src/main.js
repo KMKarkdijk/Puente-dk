@@ -1811,7 +1811,9 @@
     var d=state.dbStatus||{}, p=d.other_profile, html='';
     document.getElementById('steps').textContent='';
     document.getElementById('bar').style.width='100%';
-    if(d.status==='confirmed'){
+    if(!d.status){
+      html='<h1>Your return link is unavailable.</h1><p class="lead">It may have expired after 12 hours, or the browser no longer has a valid private token. You can start again.</p>';
+    } else if(d.status==='confirmed'){
       html='<h1>Your match is confirmed.</h1><p class="lead">You and the other person have both independently accepted.</p>';
     } else if(d.status==='declined'){
       html='<h1>This match was declined.</h1><p class="lead">No meeting has been arranged. You can start a new form.</p>';
@@ -1837,9 +1839,11 @@
       }
     } else if(d.status==='confirmed'){
       html+='<div class="callout"><p>Both people accepted independently. Coordinate the meeting through the agreed project contact; this prototype does not arrange transport or supervise meetings.</p></div>';
-    } else {
+    } else if(d.status==='waiting'){
       html+='<div class="foot"><button class="btn primary" type="button" data-db-action="refresh">Check again</button>' +
         '<button class="btn ghost" type="button" data-db-action="new">Start a new form</button></div>';
+    } else if(d.status==='declined' || !d.status){
+      html+='<div class="foot"><button class="btn primary" type="button" data-db-action="new">Start a new form</button></div>';
     }
     if(state.dbError) html+='<p class="callout warn" role="alert">'+esc(state.dbError)+'</p>';
     view.innerHTML=html;
@@ -1885,6 +1889,9 @@
     if(action==='accept' || action==='decline'){
       state.dbBusy=true; renderDatabaseResult();
       return window.PuenteDB.respond(action==='accept').then(function(d){
+        if(action==='accept') return window.PuenteDB.status();
+        return d;
+      }).then(function(d){
         state.dbStatus=d; state.dbBusy=false; renderDatabaseResult();
       }).catch(function(e){
         state.dbBusy=false; state.dbError=e.message||'Your response could not be saved.';
